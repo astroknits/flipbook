@@ -35,8 +35,8 @@ class Flipbook:
         # (default -> same base as the input video)
         self.output_base_name = self.validate_base_name(output_base_name)
 
-        # Initialize list of frame paths
-        self.frames = []
+        # Initialize number of frames in flipbook
+        self.n_flipbook_frames = 0
 
     def validate_video_file(self, filename):
         '''
@@ -104,8 +104,8 @@ class Flipbook:
         self.create_data_dir()
 
         # Cycle through the frames
-        frame_no = 0
-        self.frames = []
+        cur_video_frame = 0
+        self.n_flipbook_frames = 0
         while(True):
             # Read the frame
             frame_exists, frame = cam.read()
@@ -116,28 +116,18 @@ class Flipbook:
                 break
 
             # otherwise we process the frame
-            if frame_no % to_process == 0:
-                jpg_name = self.get_frame_jpg_name(frame_no)
+
+            if cur_video_frame % to_process == 0:
+                jpg_name = self.get_frame_jpg_name(self.n_flipbook_frames)
                 print(f'Creating {jpg_name}')
 
                 # Write out the extracted jpg image
                 cv2.imwrite(jpg_name, frame)
 
-                image = Image.open(jpg_name)
-                size = image.size
+                self.n_flipbook_frames += 1
+            cur_video_frame += 1
 
-                name = self.get_frame_pdf_name(frame_no)
-                print(f'Creating {name}')
-
-                # Write out the extracted pdf image
-                image.save(name, 'PDF', resolution=100.0)
-                image.close()
-
-                os.remove(jpg_name)
-                self.frames.append(name)
-            frame_no += 1
-
-        print(f'Extracted {frame_no} frames from {self.filename}')
+        print(f'Extracted {self.n_flipbook_frames} frames from {self.filename}')
         cam.release()
         cv2.destroyAllWindows()
 
@@ -147,17 +137,36 @@ class Flipbook:
     def write_pdf(self, frames, pdf_name):
         pdf_merger = PyPDF2.PdfMerger()
         for frame in frames:
-            pdf_merger.append(frame)
+            jpg_name = self.get_frame_jpg_name(frame)
+            if not Path(jpg_name).exists():
+                continue
+            image = Image.open(jpg_name)
+            size = image.size
+
+            pdf_name = self.get_frame_pdf_name(frame)
+            print(f'Creating {pdf_name}')
+
+            # Write out the extracted pdf image
+            image.save(pdf_name, 'PDF', resolution=100.0)
+            image.close()
+
+            os.remove(jpg_name)
+            pdf_merger.append(pdf_name)
+
         pdf_merger.write(pdf_name)
         pdf_merger.close()
         for frame in frames:
-            os.remove(frame)
+            pdf_name = self.get_frame_pdf_name(frame)
+            if not Path(pdf_name).exists():
+                continue
+            os.remove(pdf_name)
 
     def write_pdfs(self, num_per_page=9):
-        num_pages = ceil(len(self.frames)/num_per_page)
+        num_pages = ceil(self.n_flipbook_frames/num_per_page)
         print(f'Num pages: {num_pages}')
+
         for batch_no in range(num_pages):
-            batch = self.frames[batch_no * num_per_page: (batch_no + 1) * num_per_page]
+            batch = range(batch_no * num_per_page, (batch_no + 1) * num_per_page)
             batch_name = self.get_output_name(batch_no)
             print(f'Writing {batch_name}')
             self.write_pdf(batch, batch_name)
