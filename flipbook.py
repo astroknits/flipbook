@@ -140,6 +140,7 @@ class Flipbook:
             jpg_name = self.get_frame_jpg_name(frame)
             if not Path(jpg_name).exists():
                 continue
+
             image = Image.open(jpg_name)
             size = image.size
 
@@ -171,6 +172,13 @@ class Flipbook:
             print(f'Writing {batch_name}')
             self.write_pdf(batch, batch_name)
 
+    def extract_frames(self):
+        # Read the video and extract the frames
+        self.create_frames()
+
+        # Write the PDFs to output files
+        self.write_pdfs()
+
 
 def main():
     # Parse command line arguments
@@ -184,11 +192,7 @@ def main():
 
     flipbook = Flipbook(filename, output_dir, output_base_name=None)
 
-    # Read the video and extract the frames
-    flipbook.create_frames()
-
-    # Write the PDFs to output files
-    flipbook.write_pdfs()
+    flipbook.extract_frames()
 
 
 if __name__ == '__main__':
