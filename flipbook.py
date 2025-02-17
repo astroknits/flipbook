@@ -13,6 +13,9 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('filename', help='Path of the video file to use')
     parser.add_argument('output_dir', help='Directory to write output')
+    parser.add_argument('output_base_name', nargs='?', default=None,
+                        help=('Base name for output PDF files '
+                              '(default None -> use stem of the input video file)'))
     args = parser.parse_args()
     return args
 
@@ -218,7 +221,10 @@ def main():
     # Get output directory from command line args
     output_dir = args.output_dir
 
-    flipbook = Flipbook(filename, output_dir, output_base_name=None)
+    # Get base name for output PDF files
+    output_base_name = args.output_base_name
+
+    flipbook = Flipbook(filename, output_dir, output_base_name=output_base_name)
 
     flipbook.extract_frames()
 
