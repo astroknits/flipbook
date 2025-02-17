@@ -134,7 +134,35 @@ class Flipbook:
     def get_output_name(self, batch_no):
         return Path(self.output_dir).joinpath(Path(f'{self.output_base_name}.{str(batch_no)}.pdf'))
 
-    def write_pdf(self, frames, pdf_name):
+    def write_pdf_batch(self, frames, pdf_name):
+        pdf_merger = PyPDF2.PdfMerger()
+        for frame in frames:
+            jpg_name = self.get_frame_jpg_name(frame)
+            if not Path(jpg_name).exists():
+                continue
+
+            image = Image.open(jpg_name)
+            size = image.size
+
+            pdf_name = self.get_frame_pdf_name(frame)
+            print(f'Creating {pdf_name}')
+
+            # Write out the extracted pdf image
+            image.save(pdf_name, 'PDF', resolution=100.0)
+            image.close()
+
+            os.remove(jpg_name)
+            pdf_merger.append(pdf_name)
+
+        pdf_merger.write(pdf_name)
+        pdf_merger.close()
+        for frame in frames:
+            pdf_name = self.get_frame_pdf_name(frame)
+            if not Path(pdf_name).exists():
+                continue
+            os.remove(pdf_name)
+
+    def write_tiled_pdf_batch(self, frames, pdf_name, num_per_page=9):
         pdf_merger = PyPDF2.PdfMerger()
         for frame in frames:
             jpg_name = self.get_frame_jpg_name(frame)
@@ -168,9 +196,9 @@ class Flipbook:
 
         for batch_no in range(num_pages):
             batch = range(batch_no * num_per_page, (batch_no + 1) * num_per_page)
-            batch_name = self.get_output_name(batch_no)
-            print(f'Writing {batch_name}')
-            self.write_pdf(batch, batch_name)
+            batch_filename = self.get_output_name(batch_no)
+            print(f'Writing {batch_filename}')
+            self.write_pdf_batch(batch, batch_filename)
 
     def extract_frames(self):
         # Read the video and extract the frames
