@@ -137,7 +137,7 @@ class Flipbook:
     def get_output_name(self, batch_no):
         return Path(self.output_dir).joinpath(Path(f'{self.output_base_name}.{str(batch_no)}.pdf'))
 
-    def write_pdf_batch(self, frames, pdf_name):
+    def write_pdf_batch(self, frames, pdf_batch_name):
         pdf_merger = PyPDF2.PdfMerger()
         for frame in frames:
             jpg_name = self.get_frame_jpg_name(frame)
@@ -157,7 +157,7 @@ class Flipbook:
             os.remove(jpg_name)
             pdf_merger.append(pdf_name)
 
-        pdf_merger.write(pdf_name)
+        pdf_merger.write(pdf_batch_name)
         pdf_merger.close()
         for frame in frames:
             pdf_name = self.get_frame_pdf_name(frame)
@@ -165,7 +165,7 @@ class Flipbook:
                 continue
             os.remove(pdf_name)
 
-    def write_tiled_pdf_batch(self, frames, pdf_name, num_per_page=9):
+    def write_tiled_batch(self, frames, pdf_batch_name, rows=3, cols=3):
         pdf_merger = PyPDF2.PdfMerger()
         for frame in frames:
             jpg_name = self.get_frame_jpg_name(frame)
@@ -185,7 +185,7 @@ class Flipbook:
             os.remove(jpg_name)
             pdf_merger.append(pdf_name)
 
-        pdf_merger.write(pdf_name)
+        pdf_merger.write(pdf_batch_name)
         pdf_merger.close()
         for frame in frames:
             pdf_name = self.get_frame_pdf_name(frame)
@@ -193,7 +193,8 @@ class Flipbook:
                 continue
             os.remove(pdf_name)
 
-    def write_pdfs(self, num_per_page=9):
+    def write_output(self, rows=3, cols=3):
+        num_per_page = rows * cols
         num_pages = ceil(self.n_flipbook_frames/num_per_page)
         print(f'Num pages: {num_pages}')
 
@@ -208,7 +209,7 @@ class Flipbook:
         self.create_frames()
 
         # Write the PDFs to output files
-        self.write_pdfs()
+        self.write_output()
 
 
 def main():
