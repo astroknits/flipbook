@@ -1,5 +1,6 @@
 from pathlib import Path
 from math import ceil
+from tqdm import tqdm
 import cv2
 from input_video import InputVideo
 from output_format import OutputFormat
@@ -36,7 +37,7 @@ class Flipbook:
         print(f'Output Formatting Info')
         print('----------------------------')
         self.output_format.print()
-        print('\n----------------------------\n\n')
+        print('----------------------------\n\n')
 
 
     def validate_base_name(self, output_base_name):
@@ -106,11 +107,13 @@ class Flipbook:
     def write_tiled_batch(self, frames, batch_no):
         # Get file name for batch
         batch_filename = self.get_output_name(batch_no)
-        print(f'Writing {batch_filename}')
-        for i, frame in enumerate(frames):
-            pass
+        for frame_no, frame in enumerate(frames):
+            row = frame_no // self.output_format.ncols
+            col = frame_no % self.output_format.nrows
+            self.number += 1
 
     def write_output(self):
+        self.number = 0
         # total number of images per page
         num_per_page = self.output_format.nrows * self.output_format.ncols
 
@@ -118,10 +121,13 @@ class Flipbook:
         num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
         print(f'Num pages: {num_pages_to_print}')
 
-        for batch_no in range(num_pages_to_print):
-            # Get subarray of frames
-            frames_batch = self.frames[batch_no * num_per_page: (batch_no + 1) * num_per_page]
-            self.write_tiled_batch(frames_batch, batch_no)
+        for batch_no in tqdm(range(num_pages_to_print), total=num_pages_to_print, desc=f'Writing output to {self.output_dir}/'):
+            # Get subset of frames for the batch
+            frames_in_batch = self.frames[batch_no * num_per_page: (batch_no + 1) * num_per_page]
+            self.write_tiled_batch(frames_in_batch, batch_no)
+        del self.frames
+        filenames = '\n'.join([str(self.get_output_name(batch_no)) for batch_no in range(num_pages_to_print)])
+        print(f'\n\nWrote the following pages:\n{filenames}')
 
     def run(self):
         # Read the video and extract the frames
