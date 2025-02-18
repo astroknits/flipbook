@@ -26,6 +26,11 @@ class InputVideo:
         self.filename = self.validate_video_file(filename)
         self.get_video_metadata()
 
+    def print(self):
+        print(f'Input file: {self.filename}')
+        print(f'Resolution: {self.get_resolution()}')
+        print(f'Frame rate: {self.frame_rate:.2f} fps')
+
     def validate_video_file(self, filename):
         '''
         Check that the file provided exists on disk
@@ -35,18 +40,22 @@ class InputVideo:
         if not filepath.exists():
             print('file not found')
             raise FileNotFoundError(f'Video file provided does not exist: {filename}')
-        if filepath.suffix not in self.SUPPORTED_VIDEO_FORMATS:
-            print(f'Video file type {filepath.suffix} not supported (not one of {self.SUPPORTED_VIDEO_FORMATS})')
+        if filepath.suffix.strip('.') not in self.SUPPORTED_VIDEO_FORMATS:
+            msg = f'Video file type {filepath.suffix} not supported (not one of {self.SUPPORTED_VIDEO_FORMATS})'
+            raise Exception(msg)
         return filename
+
+    def get_resolution(self):
+        return f'{self.width}x{self.height}'
 
     def get_video_metadata(self):
         # Open the file and open stream
         cam = cv2.VideoCapture(self.filename)
 
-        self.input_frame_rate = cam.get(cv2.CAP_PROP_FPS)
-        self.input_width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.input_height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.input_total_frames = cam.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.frame_rate = cam.get(cv2.CAP_PROP_FPS)
+        self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.total_frames = int(cam.get(cv2.CAP_PROP_FRAME_COUNT))
 
         cam.release()
         cv2.destroyAllWindows()
@@ -70,11 +79,15 @@ class Flipbook:
         # (default -> same base as the input video)
         self.output_base_name = self.validate_base_name(output_base_name)
 
+        self.to_process = self.get_frames_to_process()
+
         # Initialize number of frames in flipbook
-        self.n_flipbook_frames = 0
+        self.n_flipbook_frames = self.input_video.total_frames // self.to_process
 
-        print(f'INPUT VIDEO: {vars(self.input_video)}')
-
+    def print(self):
+        print('\n\n----------\n\n')
+        self.input_video.print()
+        print('\n\n----------\n\n')
 
     def validate_base_name(self, output_base_name):
         if output_base_name is not None:
@@ -86,7 +99,7 @@ class Flipbook:
         if Path.exists(output_dir_path):
             if output_dir_path.is_dir():
                 return True
-            raise Exception(f'Expected data output directory path {self.data_dir} exists but is not a directory.')
+            raise Exception(f'Expected data output directory path {self.output_dir} exists but is not a directory.')
         # If the data_dir does not exist, crate it
         output_dir_path.mkdir()
         del output_dir_path
@@ -98,11 +111,12 @@ class Flipbook:
     def get_frame_pdf_name(self, frame_no):
         return Path(self.output_dir).joinpath(Path(f'{self.FRAME_BASE_NAME}.{str(frame_no)}.pdf'))
 
-    def get_frames_to_process(self, frame_rate):
+    def get_frames_to_process(self):
         '''
         Will effectively be downsampling the video frame rate
         by only processing one of every X frames.
         '''
+        frame_rate = self.input_video.frame_rate
         if frame_rate >= 30:
             # keep every 10th frame
             return 10
@@ -116,7 +130,7 @@ class Flipbook:
 
 
 
-    def create_frames(self, to_process):
+    def create_frames(self):
         # from https://www.geeksforgeeks.org/extract-images-from-video-in-python/
 
         # Open the file and open stream
@@ -126,30 +140,30 @@ class Flipbook:
         self.create_data_dir()
 
         # Cycle through the frames
-        cur_video_frame = 0
-        self.n_flipbook_frames = 0
-        while(True):
+        self.cur_flipbook_frame = 0
+
+        for cur_video_frame in range(self.input_video.total_frames):
             # Read the frame
             frame_exists, frame = cam.read()
 
             if not frame_exists:
                 # if there is no more frame being returned, we've hit the end
                 # of the frames with none left to process
+                # Before breaking, update with the accurate number of frames
+                self.n_flipbook_frames = self.cur_flipbook_frame
+                self.input_video.total_frames = cur_video_frame
                 break
 
             # otherwise we process the frame
-
-            if cur_video_frame % to_process == 0:
-                jpg_name = self.get_frame_jpg_name(self.n_flipbook_frames)
-                print(f'Creating {jpg_name}')
+            if cur_video_frame % self.to_process == 0:
+                jpg_name: Path = self.get_frame_jpg_name(self.cur_flipbook_frame)
 
                 # Write out the extracted jpg image
                 cv2.imwrite(jpg_name, frame)
 
-                self.n_flipbook_frames += 1
+                self.cur_flipbook_frame += 1
             cur_video_frame += 1
 
-        print(f'Extracted {self.n_flipbook_frames} frames from {self.input_video.filename}')
         cam.release()
         cv2.destroyAllWindows()
 
@@ -208,11 +222,8 @@ class Flipbook:
             self.write_tiled_batch(batch, batch_filename)
 
     def extract_frames(self):
-        to_process = self.get_frames_to_process(self.input_video.input_frame_rate)
-        print(f'Processing one for every {to_process} frames')
-
         # Read the video and extract the frames
-        self.create_frames(to_process)
+        self.create_frames()
 
         # Write the PDFs to output files
         self.write_output()
@@ -232,6 +243,7 @@ def main():
     output_base_name = args.output_base_name
 
     flipbook = Flipbook(filename, output_dir, output_base_name=output_base_name)
+    flipbook.print()
 
     flipbook.extract_frames()
 
