@@ -202,7 +202,7 @@ class Flipbook:
             batch = range(batch_no * num_per_page, (batch_no + 1) * num_per_page)
             batch_filename = self.get_output_name(batch_no)
             print(f'Writing {batch_filename}')
-            self.write_pdf_batch(batch, batch_filename)
+            self.write_tiled_batch(batch, batch_filename)
 
     def extract_frames(self):
         # Read the video and extract the frames
