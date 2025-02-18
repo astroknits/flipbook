@@ -117,6 +117,8 @@ class Flipbook:
         draw = ImageDraw.Draw(img)
         text_width, text_height = draw.textsize(watermark_text, font)
         image_width, image_height = img.size
+
+        # Position at bottom left-hand corner of the image
         position = (self.pad(), image_height - text_height - self.pad())
         draw.text(position, watermark_text, font=font, fill=text_color)
 
@@ -130,6 +132,7 @@ class Flipbook:
         for frame_no, frame in enumerate(frames):
             row = frame_no // self.output_format.ncols
             col = frame_no % self.output_format.nrows
+
             # https://stackoverflow.com/questions/10965417/how-to-convert-a-numpy-array-to-pil-image-applying-matplotlib-colormap
             img = Image.fromarray(frame.astype('uint8'),'RGB')
             self.add_watermark_to_img(img, str(frame_no + batch_no * len(frames) + 1))
