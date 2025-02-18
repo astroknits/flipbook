@@ -4,6 +4,7 @@ from tqdm import tqdm
 import cv2
 from input_video import InputVideo
 from output_format import OutputFormat
+from output_format import PaperFormat
 
 
 class Flipbook:
@@ -16,7 +17,7 @@ class Flipbook:
         # video file name
         self.n_flipbook_frames = None
         self.input_video = InputVideo(filename)
-        self.output_format = OutputFormat(nrows, ncols, output_frame_rate)
+        self.output_format = OutputFormat(nrows, ncols, output_frame_rate, PaperFormat.LETTER)
 
         # output directory for output for flipbook
         self.output_dir = output_dir
@@ -107,6 +108,7 @@ class Flipbook:
     def write_tiled_batch(self, frames, batch_no):
         # Get file name for batch
         batch_filename = self.get_output_name(batch_no)
+        # background =
         for frame_no, frame in enumerate(frames):
             row = frame_no // self.output_format.ncols
             col = frame_no % self.output_format.nrows
