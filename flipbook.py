@@ -133,6 +133,7 @@ class Flipbook:
             col = frame_no % self.output_format.nrows
 
             # https://stackoverflow.com/questions/10965417/how-to-convert-a-numpy-array-to-pil-image-applying-matplotlib-colormap
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(frame.astype('uint8'),'RGB')
             self.add_watermark_to_img(img, str(frame_no + batch_no * len(frames) + 1))
 
