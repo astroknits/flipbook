@@ -16,6 +16,8 @@ def parse_args():
     parser.add_argument('output_base_name', nargs='?', default=None,
                         help=('Base name for output PDF files '
                               '(default None -> use stem of the input video file)'))
+    parser.add_argument('-fr', '--output-frame-rate', type=float, default=3.0,
+                        help=('Output frame rate for flipbook in fps (default 3.0fps)'))
     args = parser.parse_args()
     return args
 
@@ -80,6 +82,7 @@ class Flipbook:
 
     def __init__(self, filename, output_dir, output_base_name=None, ncols=3, nrows=3, output_frame_rate=0):
         # video file name
+        self.n_flipbook_frames = None
         self.input_video = InputVideo(filename)
         self.output_format = OutputFormat(nrows, ncols, output_frame_rate)
 
@@ -90,10 +93,8 @@ class Flipbook:
         # (default -> same base as the input video)
         self.output_base_name = self.validate_base_name(output_base_name)
 
-        self.to_process = self.get_frames_to_process()
-
         # Initialize number of frames in flipbook
-        self.n_flipbook_frames = self.input_video.total_frames // self.to_process
+        # self.n_flipbook_frames = self.input_video.total_frames // self.to_process
 
     def print_info(self):
         print('\n\n----------------------------')
@@ -129,27 +130,10 @@ class Flipbook:
     def get_frame_pdf_name(self, frame_no):
         return Path(self.output_dir).joinpath(Path(f'{self.FRAME_BASE_NAME}.{str(frame_no)}.pdf'))
 
-    def get_frames_to_process(self):
-        '''
-        Will effectively be downsampling the video frame rate
-        by only processing one of every X frames.
-
-        TODO: add better logic to determine what this value should be
-              instead of the current ad hoc logic
-        '''
-        frame_rate = self.input_video.frame_rate
-        if frame_rate >= 30:
-            # keep every 10th frame
-            return 10
-        elif frame_rate >= 20:
-            # keep every 8th frame
-            return 8
-        else:
-            # keep every 3rd frame
-            return 3
-
     def extract_frames(self):
-        # from https://www.geeksforgeeks.org/extract-images-from-video-in-python/
+        # Input and output frame rates
+        fps_in = self.input_video.frame_rate
+        fps_out = self.output_format.frame_rate
 
         # Open the file and open stream
         cam = cv2.VideoCapture(self.input_video.filename)
@@ -158,26 +142,30 @@ class Flipbook:
         self.create_data_dir()
 
         # Cycle through the frames
-        self.cur_flipbook_frame = 0
+        index_out = 0
         self.frames = []
-        for cur_video_frame in range(self.input_video.total_frames):
+        for index_in in range(self.input_video.total_frames):
             # Read the frame
-            frame_exists, frame = cam.read()
+            success, frame = cam.read()
 
-            if not frame_exists:
-                # if there is no more frame being returned, we've hit the end
-                # of the frames with none left to process
+            if not success:
                 # Before breaking, update with the accurate number of frames
-                self.n_flipbook_frames = self.cur_flipbook_frame
-                self.input_video.total_frames = cur_video_frame
+                self.input_video.total_frames = index_in
                 break
 
             # otherwise we process the frame
-            if cur_video_frame % self.to_process == 0:
+            out_due = int(index_in / fps_in * fps_out)
+            if out_due > index_out:
+                success, frame = cam.retrieve()
+                if not success:
+                    # Before breaking, update with the accurate number of frames
+                    self.input_video.total_frames = index_in
+                    break
+                # otherwise we process the frame
                 self.frames.append(frame)
-                self.cur_flipbook_frame += 1
-            cur_video_frame += 1
+                index_out += 1
 
+        self.n_flipbook_frames = index_out
         cam.release()
         cv2.destroyAllWindows()
 
@@ -225,7 +213,10 @@ def main():
     # Get base name for output PDF files
     output_base_name = args.output_base_name
 
-    flipbook = Flipbook(filename, output_dir, output_base_name=output_base_name)
+    # Output frame rate
+    output_frame_rate = args.output_frame_rate
+
+    flipbook = Flipbook(filename, output_dir, output_base_name=output_base_name, output_frame_rate=output_frame_rate)
     flipbook.print_info()
 
     flipbook.run()
