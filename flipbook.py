@@ -108,8 +108,9 @@ class Flipbook:
     def get_output_name(self, batch_no):
         return Path(self.output_dir).joinpath(Path(f'{self.output_base_name}.{str(batch_no)}.pdf'))
 
-    def add_watermark_to_img(self, draw, watermark_text):
+    def add_watermark_to_img(self, img, watermark_text):
         # https://www.tutorialspoint.com/python_pillow/python_pillow_creating_a_watermark.htm
+        draw = ImageDraw.Draw(img)
         font_size = 50
         font = ImageFont.truetype('arial.ttf', font_size)
         text_color = (255, 255, 255)
@@ -134,13 +135,13 @@ class Flipbook:
             # https://stackoverflow.com/questions/10965417/how-to-convert-a-numpy-array-to-pil-image-applying-matplotlib-colormap
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(frame.astype('uint8'),'RGB')
-            draw = ImageDraw.Draw(img)
 
-            self.add_watermark_to_img(draw, str(frame_no + batch_no * len(frames) + 1))
+            self.add_watermark_to_img(img, str(frame_no + batch_no * len(frames) + 1))
 
             offset_width = int((self.frame_width() + 2 * self.pad() + self.left_pad()) * col + self.pad() + self.left_pad())
             offset_height = int((self.frame_height() + 2 * self.pad()) * row + self.pad())
             grid.paste(img, (offset_width, offset_height))
+
         grid.save(batch_filename)
 
     def pad(self):
