@@ -110,10 +110,8 @@ class Flipbook:
         for frame_no, frame in enumerate(frames):
             row = frame_no // self.output_format.ncols
             col = frame_no % self.output_format.nrows
-            self.number += 1
 
     def write_output(self):
-        self.number = 0
         # total number of images per page
         num_per_page = self.output_format.nrows * self.output_format.ncols
 
