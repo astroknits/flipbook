@@ -1,77 +1,8 @@
-import os
 from pathlib import Path
 from math import ceil
-from argparse import ArgumentParser
 import cv2
-from PIL import Image
-import PyPDF2
-
-def parse_args():
-    '''
-    Parse command line arguments using argparse
-    '''
-    parser = ArgumentParser()
-    parser.add_argument('filename', help='Path of the video file to use')
-    parser.add_argument('output_dir', help='Directory to write output')
-    parser.add_argument('output_base_name', nargs='?', default=None,
-                        help=('Base name for output PDF files '
-                              '(default None -> use stem of the input video file)'))
-    parser.add_argument('-fr', '--output-frame-rate', type=float, default=3.0,
-                        help=('Output frame rate for flipbook in fps (default 3.0fps)'))
-    args = parser.parse_args()
-    return args
-
-class InputVideo:
-    SUPPORTED_VIDEO_FORMATS = ['mov', 'mp4']
-
-    def __init__(self, filename):
-        self.filename = self.validate_video_file(filename)
-        self.get_video_metadata()
-
-    def print(self):
-        print(f'Input file: {self.filename}')
-        print(f'Resolution: {self.get_resolution()}')
-        print(f'Frame rate: {self.frame_rate:.2f} fps')
-
-    def validate_video_file(self, filename):
-        '''
-        Check that the file provided exists on disk
-        Raise exception if it doesn't exist, otherwise return True
-        '''
-        filepath = Path(filename)
-        if not filepath.exists():
-            print('file not found')
-            raise FileNotFoundError(f'Video file provided does not exist: {filename}')
-        if filepath.suffix.strip('.') not in self.SUPPORTED_VIDEO_FORMATS:
-            msg = f'Video file type {filepath.suffix} not supported (not one of {self.SUPPORTED_VIDEO_FORMATS})'
-            raise Exception(msg)
-        return filename
-
-    def get_resolution(self):
-        return f'{self.width}x{self.height}'
-
-    def get_video_metadata(self):
-        # Open the file and open stream
-        cam = cv2.VideoCapture(self.filename)
-
-        self.frame_rate = cam.get(cv2.CAP_PROP_FPS)
-        self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.total_frames = int(cam.get(cv2.CAP_PROP_FRAME_COUNT))
-
-        cam.release()
-        cv2.destroyAllWindows()
-
-class OutputFormat:
-    def __init__(self, ncols, nrows, frame_rate):
-        self.ncols = ncols
-        self.nrows = nrows
-        self.frame_rate = frame_rate
-
-    def print(self):
-        print(f'ncols: {self.ncols}')
-        print(f'nrows: {self.nrows}')
-        print(f'Frame rate: {self.frame_rate:.2f} fps')
+from input_video import InputVideo
+from output_format import OutputFormat
 
 
 class Flipbook:
@@ -198,29 +129,3 @@ class Flipbook:
 
         # Write the PDFs to output files
         self.write_output()
-
-
-def main():
-    # Parse command line arguments
-    args = parse_args()
-
-    # Get the vide file name from the command line arguments
-    filename = args.filename
-
-    # Get output directory from command line args
-    output_dir = args.output_dir
-
-    # Get base name for output PDF files
-    output_base_name = args.output_base_name
-
-    # Output frame rate
-    output_frame_rate = args.output_frame_rate
-
-    flipbook = Flipbook(filename, output_dir, output_base_name=output_base_name, output_frame_rate=output_frame_rate)
-    flipbook.print_info()
-
-    flipbook.run()
-
-
-if __name__ == '__main__':
-    main()
