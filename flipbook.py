@@ -4,6 +4,8 @@ from tqdm import tqdm
 import numpy as np
 import cv2
 from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
 from input_video import InputVideo
 from output_format import OutputFormat
 from output_format import PaperFormat
@@ -107,6 +109,17 @@ class Flipbook:
     def get_output_name(self, batch_no):
         return Path(self.output_dir).joinpath(Path(f'{self.output_base_name}.{str(batch_no)}.pdf'))
 
+    def add_watermark_to_img(self, img, watermark_text):
+        # https://www.tutorialspoint.com/python_pillow/python_pillow_creating_a_watermark.htm
+        font_size = 20
+        font = ImageFont.truetype('arial.ttf', font_size)
+        text_color = (255, 255, 255)
+        draw = ImageDraw.Draw(img)
+        text_width, text_height = draw.textsize(watermark_text, font)
+        image_width, image_height = img.size
+        position = (self.pad(), image_height - text_height - self.pad())
+        draw.text(position, watermark_text, font=font, fill=text_color)
+
     def write_tiled_batch(self, frames, batch_no):
         # Get file name for batch
         batch_filename = self.get_output_name(batch_no)
@@ -119,6 +132,8 @@ class Flipbook:
             col = frame_no % self.output_format.nrows
             # https://stackoverflow.com/questions/10965417/how-to-convert-a-numpy-array-to-pil-image-applying-matplotlib-colormap
             img = Image.fromarray(frame.astype('uint8'),'RGB')
+            self.add_watermark_to_img(img, str(frame_no + batch_no * len(frames) + 1))
+
             offset_width = int((self.frame_width() + 2 * self.pad()) * col + self.pad())
             offset_height = int((self.frame_height() + 2 * self.pad()) * row + self.pad())
             grid.paste(img, (offset_width, offset_height))
