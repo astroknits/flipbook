@@ -172,8 +172,11 @@ class Flipbook:
     def get_output_name(self, batch_no):
         return Path(self.output_dir).joinpath(Path(f'{self.output_base_name}.{str(batch_no)}.pdf'))
 
-    def write_tiled_batch(self, frames, pdf_batch_name):
-        for frame in frames:
+    def write_tiled_batch(self, frames, batch_no):
+        # Get file name for batch
+        batch_filename = self.get_output_name(batch_no)
+        print(f'Writing {batch_filename}')
+        for i, frame in enumerate(frames):
             pass
 
     def write_output(self):
@@ -185,10 +188,9 @@ class Flipbook:
         print(f'Num pages: {num_pages}')
 
         for batch_no in range(num_pages):
-            batch = range(batch_no * num_per_page, (batch_no + 1) * num_per_page)
-            batch_filename = self.get_output_name(batch_no)
-            print(f'Writing {batch_filename}')
-            self.write_tiled_batch(batch, batch_filename)
+            # Get subarray of frames
+            frames_batch = self.frames[batch_no * num_per_page: (batch_no + 1) * num_per_page]
+            self.write_tiled_batch(frames_batch, batch_no)
 
     def run(self):
         # Read the video and extract the frames
