@@ -36,8 +36,8 @@ class InputVideo:
         cam = cv2.VideoCapture(self.filename)
 
         self.frame_rate = cam.get(cv2.CAP_PROP_FPS)
-        self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
         self.total_frames = int(cam.get(cv2.CAP_PROP_FRAME_COUNT))
 
         cam.release()

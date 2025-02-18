@@ -1,7 +1,9 @@
 from pathlib import Path
 from math import ceil
 from tqdm import tqdm
+import numpy as np
 import cv2
+from PIL import Image
 from input_video import InputVideo
 from output_format import OutputFormat
 from output_format import PaperFormat
@@ -105,13 +107,20 @@ class Flipbook:
     def get_output_name(self, batch_no):
         return Path(self.output_dir).joinpath(Path(f'{self.output_base_name}.{str(batch_no)}.pdf'))
 
-    def write_tiled_batch(self, frames, batch_no):
+    def write_tiled_batch(self, frames, batch_no, grid_width, grid_height):
         # Get file name for batch
         batch_filename = self.get_output_name(batch_no)
-        # background =
+
+        # https://stackoverflow.com/questions/37921295/python-pil-image-make-3x3-grid-from-sequence-images
+        grid = Image.new('RGB', (grid_width, grid_height), (255, 255, 255, 255))
+
         for frame_no, frame in enumerate(frames):
             row = frame_no // self.output_format.ncols
             col = frame_no % self.output_format.nrows
+            # https://stackoverflow.com/questions/10965417/how-to-convert-a-numpy-array-to-pil-image-applying-matplotlib-colormap
+            img = Image.fromarray(frame.astype('uint8'),'RGB')
+            grid.paste(img, box=(row, col))
+        grid.save(batch_filename)
 
     def write_output(self):
         # total number of images per page
@@ -121,10 +130,21 @@ class Flipbook:
         num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
         print(f'Num pages: {num_pages_to_print}')
 
-        for batch_no in tqdm(range(num_pages_to_print), total=num_pages_to_print, desc=f'Writing output to {self.output_dir}/'):
+        # Calculate the size of the background for the batch image page
+        pad = self.output_format.frame_border_padding/100.0
+        width = self.input_video.width
+        height = self.input_video.height
+        grid_width = int((1 + 2 * pad) * width * self.output_format.ncols)
+        grid_height = int((1 + 2 * pad) * height * self.output_format.nrows)
+
+        for batch_no in tqdm(
+                range(num_pages_to_print),
+                total=num_pages_to_print,
+                desc=f'Writing output to {self.output_dir}/'
+            ):
             # Get subset of frames for the batch
             frames_in_batch = self.frames[batch_no * num_per_page: (batch_no + 1) * num_per_page]
-            self.write_tiled_batch(frames_in_batch, batch_no)
+            self.write_tiled_batch(frames_in_batch, batch_no, grid_width, grid_height)
         del self.frames
         filenames = '\n'.join([str(self.get_output_name(batch_no)) for batch_no in range(num_pages_to_print)])
         print(f'\n\nWrote the following pages:\n{filenames}')
