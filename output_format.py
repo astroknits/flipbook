@@ -13,12 +13,12 @@ class PaperFormat(Enum):
 
 
 class OutputFormat:
-    def __init__(self, ncols, nrows, frame_rate, paper_format, frame_border_padding=10.0):
+    def __init__(self, ncols, nrows, frame_rate, paper_format, frame_border_padding=20):
         self.ncols = ncols
         self.nrows = nrows
         self.frame_rate = frame_rate
         self.paper_format = paper_format
-        # Percentage: how much border padding to add around each frame (default 10%)
+        # How many pixels border padding to add around each frame (default 20)
         self.frame_border_padding = frame_border_padding
 
     def print(self):

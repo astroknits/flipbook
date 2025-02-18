@@ -107,20 +107,43 @@ class Flipbook:
     def get_output_name(self, batch_no):
         return Path(self.output_dir).joinpath(Path(f'{self.output_base_name}.{str(batch_no)}.pdf'))
 
-    def write_tiled_batch(self, frames, batch_no, grid_width, grid_height):
+    def write_tiled_batch(self, frames, batch_no):
         # Get file name for batch
         batch_filename = self.get_output_name(batch_no)
 
         # https://stackoverflow.com/questions/37921295/python-pil-image-make-3x3-grid-from-sequence-images
-        grid = Image.new('RGB', (grid_width, grid_height), (255, 255, 255, 255))
+        grid = Image.new('RGB', (self.grid_width(), self.grid_height()), (255, 255, 255, 255))
 
         for frame_no, frame in enumerate(frames):
             row = frame_no // self.output_format.ncols
             col = frame_no % self.output_format.nrows
             # https://stackoverflow.com/questions/10965417/how-to-convert-a-numpy-array-to-pil-image-applying-matplotlib-colormap
             img = Image.fromarray(frame.astype('uint8'),'RGB')
-            grid.paste(img, box=(row, col))
+            offset_width = int((self.frame_width() + 2 * self.pad()) * col + self.pad())
+            offset_height = int((self.frame_height() + 2 * self.pad()) * row + self.pad())
+            grid.paste(img, (offset_width, offset_height))
         grid.save(batch_filename)
+
+    def pad(self):
+        return self.output_format.frame_border_padding
+
+    def frame_width(self):
+        return self.input_video.width
+
+    def frame_height(self):
+        return self.input_video.height
+
+    def ncols(self):
+        return self.output_format.ncols
+
+    def nrows(self):
+        return self.output_format.nrows
+
+    def grid_width(self):
+        return int((self.frame_width() + 2 * self.pad()) * self.ncols())
+
+    def grid_height(self):
+        return int((self.frame_height() + 2 * self.pad()) * self.nrows())
 
     def write_output(self):
         # total number of images per page
@@ -130,13 +153,6 @@ class Flipbook:
         num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
         print(f'Num pages: {num_pages_to_print}')
 
-        # Calculate the size of the background for the batch image page
-        pad = self.output_format.frame_border_padding/100.0
-        width = self.input_video.width
-        height = self.input_video.height
-        grid_width = int((1 + 2 * pad) * width * self.output_format.ncols)
-        grid_height = int((1 + 2 * pad) * height * self.output_format.nrows)
-
         for batch_no in tqdm(
                 range(num_pages_to_print),
                 total=num_pages_to_print,
@@ -144,7 +160,7 @@ class Flipbook:
             ):
             # Get subset of frames for the batch
             frames_in_batch = self.frames[batch_no * num_per_page: (batch_no + 1) * num_per_page]
-            self.write_tiled_batch(frames_in_batch, batch_no, grid_width, grid_height)
+            self.write_tiled_batch(frames_in_batch, batch_no)
         del self.frames
         filenames = '\n'.join([str(self.get_output_name(batch_no)) for batch_no in range(num_pages_to_print)])
         print(f'\n\nWrote the following pages:\n{filenames}')
