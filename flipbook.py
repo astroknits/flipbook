@@ -1,7 +1,6 @@
 from pathlib import Path
 from math import ceil
 from tqdm import tqdm
-import numpy as np
 import cv2
 from PIL import Image
 from PIL import ImageFont
@@ -137,13 +136,16 @@ class Flipbook:
             img = Image.fromarray(frame.astype('uint8'),'RGB')
             self.add_watermark_to_img(img, str(frame_no + batch_no * len(frames) + 1))
 
-            offset_width = int((self.frame_width() + 2 * self.pad()) * col + self.pad())
+            offset_width = int((self.frame_width() + 2 * self.pad() + self.left_pad()) * col + self.pad() + self.left_pad())
             offset_height = int((self.frame_height() + 2 * self.pad()) * row + self.pad())
             grid.paste(img, (offset_width, offset_height))
         grid.save(batch_filename)
 
     def pad(self):
         return self.output_format.frame_border_padding
+
+    def left_pad(self):
+        return self.output_format.left_binding_padding
 
     def frame_width(self):
         return self.input_video.width
@@ -158,7 +160,7 @@ class Flipbook:
         return self.output_format.nrows
 
     def grid_width(self):
-        return int((self.frame_width() + 2 * self.pad()) * self.ncols())
+        return int((self.frame_width() + 2 * self.pad() + self.left_pad()) * self.ncols())
 
     def grid_height(self):
         return int((self.frame_height() + 2 * self.pad()) * self.nrows())

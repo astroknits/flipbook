@@ -13,7 +13,7 @@ class PaperFormat(Enum):
 
 
 class OutputFormat:
-    def __init__(self, ncols, nrows, frame_rate, paper_format, frame_border_padding=20, left_binding_padding=60):
+    def __init__(self, ncols, nrows, frame_rate, paper_format, frame_border_padding=20, left_binding_padding=260):
         self.ncols = ncols
         self.nrows = nrows
         self.frame_rate = frame_rate
