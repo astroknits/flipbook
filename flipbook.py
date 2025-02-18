@@ -60,6 +60,11 @@ class InputVideo:
         cam.release()
         cv2.destroyAllWindows()
 
+class OutputFormat:
+    def __init__(self, ncols, nrows, frame_rate):
+        self.ncols = ncols
+        self.nrows = nrows
+        self.frame_rate = frame_rate
 
 
 class Flipbook:
@@ -68,9 +73,10 @@ class Flipbook:
     '''
     FRAME_BASE_NAME = 'video_frame'
 
-    def __init__(self, filename, output_dir, output_base_name=None):
+    def __init__(self, filename, output_dir, output_base_name=None, ncols=3, nrows=3, output_frame_rate=0):
         # video file name
         self.input_video = InputVideo(filename)
+        self.output_format = OutputFormat(nrows, ncols, output_frame_rate)
 
         # output directory for output for flipbook
         self.output_dir = output_dir
@@ -115,6 +121,9 @@ class Flipbook:
         '''
         Will effectively be downsampling the video frame rate
         by only processing one of every X frames.
+
+        TODO: add better logic to determine what this value should be
+              instead of the current ad hoc logic
         '''
         frame_rate = self.input_video.frame_rate
         if frame_rate >= 30:
@@ -127,10 +136,7 @@ class Flipbook:
             # keep every 3rd frame
             return 3
 
-
-
-
-    def create_frames(self):
+    def extract_frames(self):
         # from https://www.geeksforgeeks.org/extract-images-from-video-in-python/
 
         # Open the file and open stream
@@ -141,7 +147,7 @@ class Flipbook:
 
         # Cycle through the frames
         self.cur_flipbook_frame = 0
-
+        self.frames = []
         for cur_video_frame in range(self.input_video.total_frames):
             # Read the frame
             frame_exists, frame = cam.read()
@@ -156,11 +162,7 @@ class Flipbook:
 
             # otherwise we process the frame
             if cur_video_frame % self.to_process == 0:
-                jpg_name: Path = self.get_frame_jpg_name(self.cur_flipbook_frame)
-
-                # Write out the extracted jpg image
-                cv2.imwrite(jpg_name, frame)
-
+                self.frames.append(frame)
                 self.cur_flipbook_frame += 1
             cur_video_frame += 1
 
@@ -170,48 +172,15 @@ class Flipbook:
     def get_output_name(self, batch_no):
         return Path(self.output_dir).joinpath(Path(f'{self.output_base_name}.{str(batch_no)}.pdf'))
 
-    def write_pdf_batch(self, frames, pdf_batch_name):
-        pdf_merger = PyPDF2.PdfMerger()
+    def write_tiled_batch(self, frames, pdf_batch_name):
         for frame in frames:
-            jpg_name = self.get_frame_jpg_name(frame)
-            if not Path(jpg_name).exists():
-                continue
+            pass
 
-            image = Image.open(jpg_name)
-            size = image.size
+    def write_output(self):
+        # total number of images per page
+        num_per_page = self.output_format.nrows * self.output_format.ncols
 
-            pdf_name = self.get_frame_pdf_name(frame)
-            print(f'Creating {pdf_name}')
-
-            # Write out the extracted pdf image
-            image.save(pdf_name, 'PDF', resolution=100.0)
-            image.close()
-
-            os.remove(jpg_name)
-            pdf_merger.append(pdf_name)
-
-        pdf_merger.write(pdf_batch_name)
-        pdf_merger.close()
-        for frame in frames:
-            pdf_name = self.get_frame_pdf_name(frame)
-            if not Path(pdf_name).exists():
-                continue
-            os.remove(pdf_name)
-
-    def write_tiled_batch(self, frames, pdf_batch_name, rows=3, cols=3):
-        for frame in frames:
-            jpg_name = self.get_frame_jpg_name(frame)
-            if not Path(jpg_name).exists():
-                continue
-
-            # image = Image.open(jpg_name)
-            # size = image.size
-
-            os.remove(jpg_name)
-
-
-    def write_output(self, rows=3, cols=3):
-        num_per_page = rows * cols
+        # number of pages to write
         num_pages = ceil(self.n_flipbook_frames/num_per_page)
         print(f'Num pages: {num_pages}')
 
@@ -221,9 +190,9 @@ class Flipbook:
             print(f'Writing {batch_filename}')
             self.write_tiled_batch(batch, batch_filename)
 
-    def extract_frames(self):
+    def run(self):
         # Read the video and extract the frames
-        self.create_frames()
+        self.extract_frames()
 
         # Write the PDFs to output files
         self.write_output()
@@ -245,7 +214,7 @@ def main():
     flipbook = Flipbook(filename, output_dir, output_base_name=output_base_name)
     flipbook.print()
 
-    flipbook.extract_frames()
+    flipbook.run()
 
 
 if __name__ == '__main__':
