@@ -41,6 +41,12 @@ class Flipbook:
         # Initialize number of frames in flipbook
         self.n_flipbook_frames = 0
 
+        # Properties to be set from input video file
+        self.input_frame_rate = None
+        self.input_width = None
+        self.input_height = None
+        self.input_total_frames = None
+
     def validate_video_file(self, filename):
         '''
         Check that the file provided exists on disk
@@ -91,16 +97,24 @@ class Flipbook:
             # keep every 3rd frame
             return 3
 
+    def validate_video(self):
+        # Open the file and open stream
+        cam = cv2.VideoCapture(self.filename)
+
+        self.input_frame_rate = cam.get(cv2.CAP_PROP_FPS)
+        self.input_width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.input_height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        self.input_total_frames = cam.get(cv2.CAP_PROP_FRAME_COUNT)
+
+
+
+
     def create_frames(self):
         # from https://www.geeksforgeeks.org/extract-images-from-video-in-python/
 
         # Open the file and open stream
         cam = cv2.VideoCapture(self.filename)
-
-        frame_rate = cam.get(cv2.CAP_PROP_FPS)
-        print(f'frame rate: {frame_rate} frames per second')
-        print(f'')
-        to_process = self.get_frames_to_process(frame_rate)
+        to_process = self.get_frames_to_process(self.input_frame_rate)
         print(f'Processing one for every {to_process} frames')
 
         # Create a directory for the extracted frames
@@ -166,32 +180,16 @@ class Flipbook:
             os.remove(pdf_name)
 
     def write_tiled_batch(self, frames, pdf_batch_name, rows=3, cols=3):
-        pdf_merger = PyPDF2.PdfMerger()
         for frame in frames:
             jpg_name = self.get_frame_jpg_name(frame)
             if not Path(jpg_name).exists():
                 continue
 
-            image = Image.open(jpg_name)
-            size = image.size
-
-            pdf_name = self.get_frame_pdf_name(frame)
-            print(f'Creating {pdf_name}')
-
-            # Write out the extracted pdf image
-            image.save(pdf_name, 'PDF', resolution=100.0)
-            image.close()
+            # image = Image.open(jpg_name)
+            # size = image.size
 
             os.remove(jpg_name)
-            pdf_merger.append(pdf_name)
 
-        pdf_merger.write(pdf_batch_name)
-        pdf_merger.close()
-        for frame in frames:
-            pdf_name = self.get_frame_pdf_name(frame)
-            if not Path(pdf_name).exists():
-                continue
-            os.remove(pdf_name)
 
     def write_output(self, rows=3, cols=3):
         num_per_page = rows * cols
@@ -205,6 +203,9 @@ class Flipbook:
             self.write_tiled_batch(batch, batch_filename)
 
     def extract_frames(self):
+        # Read the video and check properties
+        self.validate_video()
+
         # Read the video and extract the frames
         self.create_frames()
 
