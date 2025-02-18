@@ -66,6 +66,11 @@ class OutputFormat:
         self.nrows = nrows
         self.frame_rate = frame_rate
 
+    def print(self):
+        print(f'ncols: {self.ncols}')
+        print(f'nrows: {self.nrows}')
+        print(f'Frame rate: {self.frame_rate:.2f} fps')
+
 
 class Flipbook:
     '''
@@ -90,10 +95,17 @@ class Flipbook:
         # Initialize number of frames in flipbook
         self.n_flipbook_frames = self.input_video.total_frames // self.to_process
 
-    def print(self):
-        print('\n\n----------\n\n')
+    def print_info(self):
+        print('\n\n----------------------------')
+        print(f'Input Video Info')
+        print('----------------------------')
         self.input_video.print()
-        print('\n\n----------\n\n')
+        print('\n----------------------------')
+        print(f'Output Formatting Info')
+        print('----------------------------')
+        self.output_format.print()
+        print('\n----------------------------\n\n')
+
 
     def validate_base_name(self, output_base_name):
         if output_base_name is not None:
@@ -184,10 +196,10 @@ class Flipbook:
         num_per_page = self.output_format.nrows * self.output_format.ncols
 
         # number of pages to write
-        num_pages = ceil(self.n_flipbook_frames/num_per_page)
-        print(f'Num pages: {num_pages}')
+        num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
+        print(f'Num pages: {num_pages_to_print}')
 
-        for batch_no in range(num_pages):
+        for batch_no in range(num_pages_to_print):
             # Get subarray of frames
             frames_batch = self.frames[batch_no * num_per_page: (batch_no + 1) * num_per_page]
             self.write_tiled_batch(frames_batch, batch_no)
@@ -214,7 +226,7 @@ def main():
     output_base_name = args.output_base_name
 
     flipbook = Flipbook(filename, output_dir, output_base_name=output_base_name)
-    flipbook.print()
+    flipbook.print_info()
 
     flipbook.run()
 
