@@ -141,6 +141,13 @@ class Flipbook:
             offset_width = int((self.frame_width() + 2 * self.pad() + self.left_pad()) * col + self.pad() + self.left_pad())
             offset_height = int((self.frame_height() + 2 * self.pad()) * row + self.pad())
             grid.paste(img, (offset_width, offset_height))
+            draw = ImageDraw.Draw(grid)
+
+            # draw vertical and horizontal lines at end of each frame
+            end_of_width = offset_width + self.frame_width() + self.pad()
+            end_of_height = offset_height + self.frame_height() + self.pad()
+            draw.line((end_of_width, 0, end_of_width, end_of_height), fill=0, width=2)
+            draw.line((0, end_of_height, end_of_width, end_of_height), fill=0, width=2)
 
         grid.save(batch_filename)
 
