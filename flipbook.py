@@ -1,35 +1,26 @@
-import os
 from pathlib import Path
 from math import ceil
-from argparse import ArgumentParser
+from tqdm import tqdm
 import cv2
 from PIL import Image
-import PyPDF2
-
-def parse_args():
-    '''
-    Parse command line arguments using argparse
-    '''
-    parser = ArgumentParser()
-    parser.add_argument('filename', help='Path of the video file to use')
-    parser.add_argument('output_dir', help='Directory to write output')
-    parser.add_argument('output_base_name', nargs='?', default=None,
-                        help=('Base name for output PDF files '
-                              '(default None -> use stem of the input video file)'))
-    args = parser.parse_args()
-    return args
+from PIL import ImageFont
+from PIL import ImageDraw
+from input_video import InputVideo
+from output_format import OutputFormat
+from output_format import PaperFormat
 
 
 class Flipbook:
     '''
     Class to create frames for flipbook from video file
     '''
-    SUPPORTED_VIDEO_FORMATS = ['mov', 'mp4']
     FRAME_BASE_NAME = 'video_frame'
 
-    def __init__(self, filename, output_dir, output_base_name=None):
+    def __init__(self, filename, output_dir, output_base_name=None, ncols=3, nrows=3, output_frame_rate=0):
         # video file name
-        self.filename = self.validate_video_file(filename)
+        self.n_flipbook_frames = None
+        self.input_video = InputVideo(filename)
+        self.output_format = OutputFormat(nrows, ncols, output_frame_rate, PaperFormat.LETTER)
 
         # output directory for output for flipbook
         self.output_dir = output_dir
@@ -39,32 +30,31 @@ class Flipbook:
         self.output_base_name = self.validate_base_name(output_base_name)
 
         # Initialize number of frames in flipbook
-        self.n_flipbook_frames = 0
+        # self.n_flipbook_frames = self.input_video.total_frames // self.to_process
 
-    def validate_video_file(self, filename):
-        '''
-        Check that the file provided exists on disk
-        Raise exception if it doesn't exist, otherwise return True
-        '''
-        filepath = Path(filename)
-        if not filepath.exists():
-            print('file not found')
-            raise FileNotFoundError(f'Video file provided does not exist: {filename}')
-        if filepath.suffix not in self.SUPPORTED_VIDEO_FORMATS:
-            print(f'Video file type {filepath.suffix} not supported (not one of {self.SUPPORTED_VIDEO_FORMATS})')
-        return filename
+    def print_info(self):
+        print('\n\n----------------------------')
+        print(f'Input Video Info')
+        print('----------------------------')
+        self.input_video.print()
+        print('\n----------------------------')
+        print(f'Output Formatting Info')
+        print('----------------------------')
+        self.output_format.print()
+        print('----------------------------\n\n')
+
 
     def validate_base_name(self, output_base_name):
         if output_base_name is not None:
             return output_base_name
-        return Path(self.filename).stem
+        return Path(self.input_video.filename).stem
 
     def create_data_dir(self):
         output_dir_path = Path(self.output_dir)
         if Path.exists(output_dir_path):
             if output_dir_path.is_dir():
                 return True
-            raise Exception(f'Expected data output directory path {self.data_dir} exists but is not a directory.')
+            raise Exception(f'Expected data output directory path {self.output_dir} exists but is not a directory.')
         # If the data_dir does not exist, crate it
         output_dir_path.mkdir()
         del output_dir_path
@@ -76,159 +66,138 @@ class Flipbook:
     def get_frame_pdf_name(self, frame_no):
         return Path(self.output_dir).joinpath(Path(f'{self.FRAME_BASE_NAME}.{str(frame_no)}.pdf'))
 
-    def get_frames_to_process(self, frame_rate):
-        '''
-        Will effectively be downsampling the video frame rate
-        by only processing one of every X frames.
-        '''
-        if frame_rate >= 30:
-            # keep every 10th frame
-            return 10
-        elif frame_rate >= 20:
-            # keep every 8th frame
-            return 8
-        else:
-            # keep every 3rd frame
-            return 3
-
-    def create_frames(self):
-        # from https://www.geeksforgeeks.org/extract-images-from-video-in-python/
+    def extract_frames(self):
+        # Input and output frame rates
+        fps_in = self.input_video.frame_rate
+        fps_out = self.output_format.frame_rate
 
         # Open the file and open stream
-        cam = cv2.VideoCapture(self.filename)
-
-        frame_rate = cam.get(cv2.CAP_PROP_FPS)
-        print(f'frame rate: {frame_rate} frames per second')
-        print(f'')
-        to_process = self.get_frames_to_process(frame_rate)
-        print(f'Processing one for every {to_process} frames')
+        cam = cv2.VideoCapture(self.input_video.filename)
 
         # Create a directory for the extracted frames
         self.create_data_dir()
 
         # Cycle through the frames
-        cur_video_frame = 0
-        self.n_flipbook_frames = 0
-        while(True):
+        index_out = 0
+        self.frames = []
+        for index_in in range(self.input_video.total_frames):
             # Read the frame
-            frame_exists, frame = cam.read()
+            success, frame = cam.read()
 
-            if not frame_exists:
-                # if there is no more frame being returned, we've hit the end
-                # of the frames with none left to process
+            if not success:
+                # Before breaking, update with the accurate number of frames
+                self.input_video.total_frames = index_in
                 break
 
             # otherwise we process the frame
+            out_due = int(index_in / fps_in * fps_out)
+            if out_due > index_out:
+                success, frame = cam.retrieve()
+                if not success:
+                    # Before breaking, update with the accurate number of frames
+                    self.input_video.total_frames = index_in
+                    break
+                # otherwise we process the frame
+                self.frames.append(frame)
+                index_out += 1
 
-            if cur_video_frame % to_process == 0:
-                jpg_name = self.get_frame_jpg_name(self.n_flipbook_frames)
-                print(f'Creating {jpg_name}')
-
-                # Write out the extracted jpg image
-                cv2.imwrite(jpg_name, frame)
-
-                self.n_flipbook_frames += 1
-            cur_video_frame += 1
-
-        print(f'Extracted {self.n_flipbook_frames} frames from {self.filename}')
+        self.n_flipbook_frames = index_out
         cam.release()
         cv2.destroyAllWindows()
 
     def get_output_name(self, batch_no):
         return Path(self.output_dir).joinpath(Path(f'{self.output_base_name}.{str(batch_no)}.pdf'))
 
-    def write_pdf_batch(self, frames, pdf_batch_name):
-        pdf_merger = PyPDF2.PdfMerger()
-        for frame in frames:
-            jpg_name = self.get_frame_jpg_name(frame)
-            if not Path(jpg_name).exists():
-                continue
+    def add_watermark_to_img(self, img, watermark_text):
+        # https://www.tutorialspoint.com/python_pillow/python_pillow_creating_a_watermark.htm
+        draw = ImageDraw.Draw(img)
+        font_size = 50
+        font = ImageFont.truetype('arial.ttf', font_size)
+        text_color = (255, 255, 255)
+        text_width, text_height = draw.textsize(watermark_text, font)
 
-            image = Image.open(jpg_name)
-            size = image.size
+        # Position at bottom left-hand corner of the image
+        position = (self.pad(), self.frame_height() - text_height - self.pad())
+        draw.text(position, watermark_text, font=font, fill=text_color)
 
-            pdf_name = self.get_frame_pdf_name(frame)
-            print(f'Creating {pdf_name}')
 
-            # Write out the extracted pdf image
-            image.save(pdf_name, 'PDF', resolution=100.0)
-            image.close()
+    def write_tiled_batch(self, frames, batch_no):
+        # Get file name for batch
+        batch_filename = self.get_output_name(batch_no)
 
-            os.remove(jpg_name)
-            pdf_merger.append(pdf_name)
+        # https://stackoverflow.com/questions/37921295/python-pil-image-make-3x3-grid-from-sequence-images
+        grid = Image.new('RGB', (self.grid_width(), self.grid_height()), (255, 255, 255, 255))
 
-        pdf_merger.write(pdf_batch_name)
-        pdf_merger.close()
-        for frame in frames:
-            pdf_name = self.get_frame_pdf_name(frame)
-            if not Path(pdf_name).exists():
-                continue
-            os.remove(pdf_name)
+        for frame_no, frame in enumerate(frames):
+            row = frame_no // self.output_format.ncols
+            col = frame_no % self.output_format.nrows
 
-    def write_tiled_batch(self, frames, pdf_batch_name, rows=3, cols=3):
-        pdf_merger = PyPDF2.PdfMerger()
-        for frame in frames:
-            jpg_name = self.get_frame_jpg_name(frame)
-            if not Path(jpg_name).exists():
-                continue
+            # https://stackoverflow.com/questions/10965417/how-to-convert-a-numpy-array-to-pil-image-applying-matplotlib-colormap
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame.astype('uint8'),'RGB')
 
-            image = Image.open(jpg_name)
-            size = image.size
+            self.add_watermark_to_img(img, str(frame_no + batch_no * len(frames) + 1))
 
-            pdf_name = self.get_frame_pdf_name(frame)
-            print(f'Creating {pdf_name}')
+            offset_width = int((self.frame_width() + 2 * self.pad() + self.left_pad()) * col + self.pad() + self.left_pad())
+            offset_height = int((self.frame_height() + 2 * self.pad()) * row + self.pad())
+            grid.paste(img, (offset_width, offset_height))
+            draw = ImageDraw.Draw(grid)
 
-            # Write out the extracted pdf image
-            image.save(pdf_name, 'PDF', resolution=100.0)
-            image.close()
+            # draw vertical and horizontal lines at end of each frame
+            end_of_width = offset_width + self.frame_width() + self.pad()
+            end_of_height = offset_height + self.frame_height() + self.pad()
+            draw.line((end_of_width, 0, end_of_width, end_of_height), fill=0, width=2)
+            draw.line((0, end_of_height, end_of_width, end_of_height), fill=0, width=2)
 
-            os.remove(jpg_name)
-            pdf_merger.append(pdf_name)
+        grid.save(batch_filename)
 
-        pdf_merger.write(pdf_batch_name)
-        pdf_merger.close()
-        for frame in frames:
-            pdf_name = self.get_frame_pdf_name(frame)
-            if not Path(pdf_name).exists():
-                continue
-            os.remove(pdf_name)
+    def pad(self):
+        return self.output_format.frame_border_padding
 
-    def write_output(self, rows=3, cols=3):
-        num_per_page = rows * cols
-        num_pages = ceil(self.n_flipbook_frames/num_per_page)
-        print(f'Num pages: {num_pages}')
+    def left_pad(self):
+        return self.output_format.left_binding_padding
 
-        for batch_no in range(num_pages):
-            batch = range(batch_no * num_per_page, (batch_no + 1) * num_per_page)
-            batch_filename = self.get_output_name(batch_no)
-            print(f'Writing {batch_filename}')
-            self.write_pdf_batch(batch, batch_filename)
+    def frame_width(self):
+        return self.input_video.width
 
-    def extract_frames(self):
+    def frame_height(self):
+        return self.input_video.height
+
+    def ncols(self):
+        return self.output_format.ncols
+
+    def nrows(self):
+        return self.output_format.nrows
+
+    def grid_width(self):
+        return int((self.frame_width() + 2 * self.pad() + self.left_pad()) * self.ncols())
+
+    def grid_height(self):
+        return int((self.frame_height() + 2 * self.pad()) * self.nrows())
+
+    def write_output(self):
+        # total number of images per page
+        num_per_page = self.output_format.nrows * self.output_format.ncols
+
+        # number of pages to write
+        num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
+        print(f'Num pages: {num_pages_to_print}')
+
+        for batch_no in tqdm(
+                range(num_pages_to_print),
+                total=num_pages_to_print,
+                desc=f'Writing output to {self.output_dir}/'
+            ):
+            # Get subset of frames for the batch
+            frames_in_batch = self.frames[batch_no * num_per_page: (batch_no + 1) * num_per_page]
+            self.write_tiled_batch(frames_in_batch, batch_no)
+        del self.frames
+        filenames = '\n'.join([str(self.get_output_name(batch_no)) for batch_no in range(num_pages_to_print)])
+        print(f'\n\nWrote the following pages:\n{filenames}')
+
+    def run(self):
         # Read the video and extract the frames
-        self.create_frames()
+        self.extract_frames()
 
         # Write the PDFs to output files
         self.write_output()
-
-
-def main():
-    # Parse command line arguments
-    args = parse_args()
-
-    # Get the vide file name from the command line arguments
-    filename = args.filename
-
-    # Get output directory from command line args
-    output_dir = args.output_dir
-
-    # Get base name for output PDF files
-    output_base_name = args.output_base_name
-
-    flipbook = Flipbook(filename, output_dir, output_base_name=output_base_name)
-
-    flipbook.extract_frames()
-
-
-if __name__ == '__main__':
-    main()
