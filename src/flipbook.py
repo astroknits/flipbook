@@ -114,7 +114,7 @@ class Flipbook:
         # https://www.tutorialspoint.com/python_pillow/python_pillow_creating_a_watermark.htm
         draw = ImageDraw.Draw(img)
         font_size = 50
-        font = ImageFont.truetype(FlipbookConstants.DEFAULT_FONT, font_size)
+        font = ImageFont.truetype(FlipbookConstants.Font.DEFAULT, font_size)
         text_color = (255, 255, 255)
         text_width, text_height = draw.textsize(watermark_text, font)
 

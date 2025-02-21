@@ -1,11 +1,19 @@
 from pathlib import Path
 import cv2
+from src.flipbook_constants import FlipbookConstants
 
 
 class InputVideo:
-    SUPPORTED_VIDEO_FORMATS = ['mov', 'mp4']
-
+    '''
+    Class owning info about the input video file
+    including file validation and metadata gathering
+    '''
     def __init__(self, filename):
+        '''
+        Validate existence of input media file and check format.
+        Also gather metadata
+        :param filename:
+        '''
         self.filename = self.validate_video_file(filename)
         self.get_video_metadata()
 
@@ -23,8 +31,9 @@ class InputVideo:
         if not filepath.exists():
             print('file not found')
             raise FileNotFoundError(f'Video file provided does not exist: {filename}')
-        if filepath.suffix.strip('.') not in self.SUPPORTED_VIDEO_FORMATS:
-            msg = f'Video file type {filepath.suffix} not supported (not one of {self.SUPPORTED_VIDEO_FORMATS})'
+        if filepath.suffix.strip('.') not in FlipbookConstants.Video.SUPPORTED_FORMATS:
+            msg = (f'Video file type {filepath.suffix} not supported '
+                   f'(not one of {FlipbookConstants.Video.SUPPORTED_FORMATS})')
             raise Exception(msg)
         return filename
 
