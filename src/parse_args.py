@@ -1,10 +1,13 @@
 from argparse import ArgumentParser
+from src.paper_format import PaperFormat
 
 def parse_args():
     '''
     Parse command line arguments using argparse
     '''
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        description=('Create a flipbook from a video file by extracting frames and arranging them'
+                     ' on specific paper type for printing'))
     parser.add_argument('filename', help='Path of the video file to use')
     parser.add_argument('output_dir', help='Directory to write output')
     parser.add_argument('output_base_name', nargs='?', default=None,
@@ -12,5 +15,8 @@ def parse_args():
                               '(default None -> use stem of the input video file)'))
     parser.add_argument('-fr', '--output-frame-rate', type=float, default=3.0,
                         help=('Output frame rate for flipbook in fps (default 3.0fps)'))
+    # Get the list of options for paper type from the PaperFormat enum
+    paper_formats = [e.name.lower() for e in PaperFormat]
+    parser.add_argument('-p', '--paper-format', choices=paper_formats, default='letter')
     args = parser.parse_args()
     return args

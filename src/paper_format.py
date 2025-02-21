@@ -19,3 +19,9 @@ class PaperFormat(Enum):
     '''
     LETTER = PaperSize('US Letter', 8.5, 11.0)
     LEGAL = PaperSize('US Legal', 8.5, 14.0)
+
+    @staticmethod
+    def get(key):
+        # Helper method to get enum from lower case string
+        return PaperFormat[key.upper()]
+
