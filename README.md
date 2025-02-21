@@ -55,7 +55,7 @@ Writing output to flipbook_output/mickey/: 100%|██████████�
 
 
 Wrote the following PDF:
-flipbook_output/mickey/steamboat_willie_mickey.pdf
+flipbook_output/mickey/steamboat_willie.pdf
 ```
 
 
