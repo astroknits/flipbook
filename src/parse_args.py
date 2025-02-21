@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from src.paper_format import PaperFormat
+from src.paper_type import PaperType
 
 def parse_args():
     '''
@@ -15,8 +15,8 @@ def parse_args():
                               '(default None -> use stem of the input video file)'))
     parser.add_argument('-fr', '--output-frame-rate', type=float, default=3.0,
                         help=('Output frame rate for flipbook in fps (default 3.0fps)'))
-    # Get the list of options for paper type from the PaperFormat enum
-    paper_formats = [e.name.lower() for e in PaperFormat]
-    parser.add_argument('-p', '--paper-format', choices=paper_formats, default='letter')
+    # Get the list of options for paper type from the PaperType enum
+    paper_types = [e.name.lower() for e in PaperType]
+    parser.add_argument('-p', '--paper-type', choices=paper_types, default='letter')
     args = parser.parse_args()
     return args

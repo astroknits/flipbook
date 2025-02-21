@@ -9,7 +9,7 @@ from PIL import ImageDraw
 from src.flipbook_constants import FlipbookConstants
 from src.input_video import InputVideo
 from src.output_format import OutputFormat
-from src.paper_format import PaperFormat
+from src.paper_type import PaperType
 
 
 class Flipbook:
@@ -22,7 +22,7 @@ class Flipbook:
         # video file name
         self.n_flipbook_frames = None
         self.input_video = InputVideo(filename)
-        self.output_format = OutputFormat(nrows, ncols, output_frame_rate, PaperFormat.LETTER)
+        self.output_format = OutputFormat(nrows, ncols, output_frame_rate, PaperType.LETTER)
 
         # output directory for output for flipbook
         self.output_dir = output_dir
