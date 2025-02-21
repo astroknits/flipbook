@@ -7,7 +7,7 @@ The output pages can be printed and cut manually to be assembled into a flipbook
 # Setup
 To install the dependencies for the script, run:
 
-```pip install pillow opencv-python```
+```pip install -r requirements.txt```
 
 # Script Arguments
 
