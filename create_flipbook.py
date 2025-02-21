@@ -9,7 +9,6 @@ def main():
     flipbook = Flipbook(
         args.filename,
         args.output_dir,
-        output_base_name=args.output_base_name,
         output_frame_rate=args.output_frame_rate)
 
     # Print the info

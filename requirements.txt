@@ -1,2 +1,4 @@
 pillow
 opencv-python
+pypdf # to combine individual PDF pages into one document
+
