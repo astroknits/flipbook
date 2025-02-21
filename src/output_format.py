@@ -12,7 +12,7 @@ class OutputFormat:
     flipbook dimension and work backwards to calculate how many frames
     will fit per page,
     '''
-    def __init__(self, nrows, ncols, frame_rate, paper_format, frame_border_padding=50, left_binding_padding=260):
+    def __init__(self, nrows, ncols, frame_rate, paper_format, frame_border_padding, left_binding_padding):
         # Number of rows and columns to arrange flipbook frames in a page
         self.nrows = nrows
         self.ncols = ncols

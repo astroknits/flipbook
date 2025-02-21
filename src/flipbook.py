@@ -5,9 +5,10 @@ import cv2
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
+from pypdf import PdfMerger
 
 from src.flipbook_constants import FlipbookConstants
-from src.input_video import InputVideo
+from src.input_format import InputFormat
 from src.output_format import OutputFormat
 from src.paper_type import PaperType
 
@@ -16,13 +17,21 @@ class Flipbook:
     '''
     Class to create frames for flipbook from video file
     '''
-    FRAME_BASE_NAME = 'video_frame'
 
-    def __init__(self, filename, output_dir, output_base_name=None, ncols=3, nrows=3, output_frame_rate=0):
+    def __init__(
+            self,
+            filename,
+            output_dir,
+            output_base_name=None,
+            ncols=3,
+            nrows=3,
+            output_frame_rate=0,
+            frame_border_padding=50,
+            left_binding_padding=260,
+             ):
+
         # video file name
-        self.n_flipbook_frames = None
-        self.input_video = InputVideo(filename)
-        self.output_format = OutputFormat(nrows, ncols, output_frame_rate, PaperType.LETTER)
+        self.input_video = InputFormat(filename)
 
         # output directory for output for flipbook
         self.output_dir = output_dir
@@ -31,8 +40,17 @@ class Flipbook:
         # (default -> same base as the input video)
         self.output_base_name = self.validate_base_name(output_base_name)
 
-        # Initialize number of frames in flipbook
-        # self.n_flipbook_frames = self.input_video.total_frames // self.to_process
+        self.output_format = OutputFormat(
+                                nrows,
+                                ncols,
+                                output_frame_rate,
+                                PaperType.LETTER,
+                                frame_border_padding,
+                                left_binding_padding,
+                            )
+
+        self.n_flipbook_frames = None
+
 
     def print_info(self):
         print('\n\n----------------------------')
@@ -61,12 +79,6 @@ class Flipbook:
         output_dir_path.mkdir()
         del output_dir_path
         return True
-
-    def get_frame_jpg_name(self, frame_no):
-        return Path(self.output_dir).joinpath(Path(f'{self.FRAME_BASE_NAME}.{str(frame_no)}.jpg'))
-
-    def get_frame_pdf_name(self, frame_no):
-        return Path(self.output_dir).joinpath(Path(f'{self.FRAME_BASE_NAME}.{str(frame_no)}.pdf'))
 
     def extract_frames(self):
         # Input and output frame rates
@@ -193,6 +205,7 @@ class Flipbook:
             # Get subset of frames for the batch
             frames_in_batch = self.frames[batch_no * num_per_page: (batch_no + 1) * num_per_page]
             self.write_tiled_batch(frames_in_batch, batch_no)
+
         del self.frames
         filenames = '\n'.join([str(self.get_output_name(batch_no)) for batch_no in range(num_pages_to_print)])
         print(f'\n\nWrote the following pages:\n{filenames}')
