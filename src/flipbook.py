@@ -9,7 +9,7 @@ from PIL import ImageDraw
 from src.flipbook_constants import FlipbookConstants
 from src.input_video import InputVideo
 from src.output_format import OutputFormat
-from src.output_format import PaperFormat
+from src.paper_format import PaperFormat
 
 
 class Flipbook:
