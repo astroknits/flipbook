@@ -5,9 +5,11 @@ import cv2
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
-from input_video import InputVideo
-from output_format import OutputFormat
-from output_format import PaperFormat
+
+from src.flipbook_constants import FlipbookConstants
+from src.input_video import InputVideo
+from src.output_format import OutputFormat
+from src.output_format import PaperFormat
 
 
 class Flipbook:
@@ -112,7 +114,7 @@ class Flipbook:
         # https://www.tutorialspoint.com/python_pillow/python_pillow_creating_a_watermark.htm
         draw = ImageDraw.Draw(img)
         font_size = 50
-        font = ImageFont.truetype('arial.ttf', font_size)
+        font = ImageFont.truetype(FlipbookConstants.Font.DEFAULT, font_size)
         text_color = (255, 255, 255)
         text_width, text_height = draw.textsize(watermark_text, font)
 

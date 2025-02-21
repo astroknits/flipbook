@@ -1,5 +1,5 @@
-from parse_args import parse_args
-from flipbook import Flipbook
+from src.parse_args import parse_args
+from src.flipbook import Flipbook
 
 def main():
     # Parse command line arguments
