@@ -9,7 +9,9 @@ def main():
     flipbook = Flipbook(
         args.filename,
         args.output_dir,
-        output_frame_rate=args.output_frame_rate)
+        output_frame_rate=args.output_frame_rate,
+        paper_type=args.paper_type
+    )
 
     # Print the info
     flipbook.print_info()

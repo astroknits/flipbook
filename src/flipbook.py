@@ -26,6 +26,7 @@ class Flipbook:
             ncols=3,
             nrows=3,
             output_frame_rate=0,
+            paper_type='letter',
             frame_border_padding=50,
             left_binding_padding=260,
              ):
@@ -40,13 +41,12 @@ class Flipbook:
                                 nrows,
                                 ncols,
                                 output_frame_rate,
-                                PaperType.LETTER,
+                                PaperType.get(paper_type),
                                 frame_border_padding,
                                 left_binding_padding,
                             )
 
         self.n_flipbook_frames = None
-
 
     def print_info(self):
         print('\n\n----------------------------')
@@ -79,10 +79,12 @@ class Flipbook:
         return self.output_format.nrows
 
     def grid_width(self):
-        return int((self.frame_width() + 2 * self.pad() + self.left_pad()) * self.ncols())
+        # return int((self.frame_width() + 2 * self.pad() + self.left_pad()) * self.ncols())
+        return self.output_format.paper_format.value.xres()
 
     def grid_height(self):
-        return int((self.frame_height() + 2 * self.pad()) * self.nrows())
+        # return int((self.frame_height() + 2 * self.pad()) * self.nrows())
+        return self.output_format.paper_format.value.yres()
 
     def create_output_dir(self):
         output_dir_path = Path(self.output_dir)

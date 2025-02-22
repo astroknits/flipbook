@@ -1,3 +1,5 @@
+from src.paper_type import PaperType
+
 
 class OutputFormat:
     '''
