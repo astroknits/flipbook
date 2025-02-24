@@ -149,16 +149,21 @@ class Frame:
         return offset_width, offset_height
 
     def add_watermark_to_img(self, img):
+
         watermark_text = str(self.frame_no)
+
         # https://www.tutorialspoint.com/python_pillow/python_pillow_creating_a_watermark.htm
         draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype(FlipbookConstants.Font.DEFAULT, FlipbookConstants.Font.SIZE)
+        font = ImageFont.truetype(
+            FlipbookConstants.Font.DEFAULT,
+            FlipbookConstants.Font.SIZE)
         text_width, text_height = draw.textsize(watermark_text, font)
 
         # Position at bottom left-hand corner of the image
-        height_pos = self.settings.output_height() - text_height - self.settings.padding.bottom
+        # Add left padding to match the bottom padding
+        width_pos = self.settings.padding.bottom
         height_pos = self.settings.output_height() - (self.settings.padding.bottom + text_height)
-        position = (0, height_pos)
+        position = (width_pos, height_pos)
         print(f'adding watermark to image. {self.frame_no}, at {position}')
         draw.text(position, watermark_text, font=font, fill='black')
 
