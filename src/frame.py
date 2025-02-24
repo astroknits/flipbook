@@ -6,7 +6,7 @@ from PIL import ImageFont
 from src.flipbook_constants import FlipbookConstants
 from src.input_format import InputFormat
 from src.output_format import OutputFormat
-from src.padding import EqualPadding, LeftPadding
+from src.padding import EqualPadding, LeftPadding, ZeroPadding
 from src.paper_type import PaperType
 
 
@@ -42,11 +42,23 @@ class FrameSettings:
         left_binding_padding = 260
         return LeftPadding(left_binding_padding)
 
+    def input_width(self):
+        return self.input_format.width
+
+    def input_height(self):
+        return self.input_format.height
+
     def output_width(self):
-        return self.output_format.width
+        return self.output_format.xres()
 
     def output_height(self):
-        return self.output_format.height
+        return self.output_format.yres()
+
+    def canvas_width(self):
+        return self.output_width() - self.padding.left - self.padding.right
+
+    def canvas_height(self):
+        return self.output_height() - self.padding.top - self.padding.bottom
 
     def print(self):
         print(f'Frame border padding: {self.get_frame_border_padding()}')
@@ -61,6 +73,9 @@ class Frame:
         self.frame_settings = frame_settings
         self.frame = self.__set_frame(img)
 
+        # Initialize frame padding to zero
+        self.canvas_padding = ZeroPadding()
+
     def get_frame(self):
         return self.frame
 
@@ -68,6 +83,47 @@ class Frame:
         frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         frame = Image.fromarray(frame.astype('uint8'), 'RGB')
 
+        # resize based on output size
+        # How do we do this?
+        # Do we want an absolute padding to be set by script?
+        #    Yes.
+        # Do we want absolute left padding to be set by script?
+        #    Yes.
+        # OK.  then, we need to do a calculation.
+        # canvas_width = output width - padding.left - padding.right
+        # canvas_height = output_height - padding.top - padding.bottom
+
+        canvas_width = self.frame_settings.canvas_width()
+        canvas_height = self.frame_settings.canvas_height()
+
+        input_width = self.frame_settings.input_width()
+        input_height = self.frame_settings.input_height()
+
+        input_aspect = input_height/input_width
+        print(f'input_aspect: {input_aspect}')
+        canvas_aspect = canvas_height/canvas_width
+        print(f'canvas_aspect: {canvas_aspect}')
+
+        # Check which dimension to fit to the canvas
+        if input_aspect >= canvas_aspect:
+            # rel input_height >= rel canvas_height
+            # input frame aspect ratio is taller than canvas
+            # fit to canvas height
+            resize_height = canvas_height
+            resize_width = int(input_aspect * resize_height)
+        else:
+            # rel input_height < rel canvas_height
+            # input frame aspect ratio is shorter than canvas
+            # fit to canvas width
+            resize_width = canvas_width
+            resize_height = int(resize_width / input_aspect)
+
+        print(f'input: {input_width}x{input_height}')
+        print(f'canvas: {canvas_width}x{canvas_height}')
+        print(f'resize: {resize_width}x{resize_height}')
+        frame.resize((resize_width, resize_height))
+
+        # then add watermark to the frame
         self.add_watermark_to_img(frame)
         return frame
 
@@ -81,7 +137,7 @@ class Frame:
         offset_width = width * col
         offset_height = height * row
 
-        return (offset_width, offset_height)
+        return offset_width, offset_height
 
     def draw_border(self):
         grid = None
@@ -101,7 +157,10 @@ class Frame:
         text_width, text_height = draw.textsize(watermark_text, font)
 
         # Position at bottom left-hand corner of the image
-        position = (0, self.frame_settings.output_height() - text_height - self.frame_settings.padding.bottom)
+        height_pos = self.frame_settings.output_height() - text_height - self.frame_settings.padding.bottom
+        height_pos = self.frame_settings.output_height() - (self.frame_settings.padding.bottom + text_height)
+        position = (0, height_pos)
+        print(f'adding watermark to image. {self.frame_no}, at {position}')
         draw.text(position, watermark_text, font=font, fill=text_color)
 
 

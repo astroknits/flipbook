@@ -29,3 +29,33 @@ class LeftPadding(Padding):
     def __init__(self, pad):
         super().__init__(pad, 0, 0, 0)
 
+class VerticalPadding(Padding):
+    '''
+    Add padding to be split between top and bottom
+    '''
+    def __init__(self, pad):
+        top = pad//2
+        bottom = pad//2
+        if pad % 2 == 1:
+            # if it's an odd number, put the extra pixel on the bottom
+            bottom += 1
+        super().__init__(0, 0, top, bottom)
+
+class HorizontalPadding(Padding):
+    '''
+    Add padding to be split between left and right
+    '''
+    def __init__(self, pad):
+        left = pad//2
+        right = pad//2
+        if pad % 2 == 1:
+            # if it's an odd number, put the extra pixel on the left
+            left += 1
+        super().__init__(left, right, 0, 0)
+
+class ZeroPadding(EqualPadding):
+    '''
+    Add zero padding
+    '''
+    def __init__(self):
+        super().__init__(0)

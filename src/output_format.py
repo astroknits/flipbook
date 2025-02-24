@@ -35,6 +35,9 @@ class OutputFormat:
         self.nrows = self.get_nrows(height)
         self.ncols = self.get_ncols(width)
 
+    def aspect(self):
+        return self.height/self.width
+
     def get_nrows(self, height):
         return int(self.paper_type.value.width // height)
 

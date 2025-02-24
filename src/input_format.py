@@ -37,6 +37,9 @@ class InputFormat:
         cam.release()
         cv2.destroyAllWindows()
 
+    def aspect(self):
+        return self.height/self.width
+
     def validate_video_file(self, filename):
         '''
         Check that the file provided exists on disk
