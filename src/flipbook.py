@@ -6,7 +6,11 @@ import cv2
 from PIL import Image
 from pypdf import PdfWriter
 
-from src.frame import FrameSettings, Frame
+from src.frame import Frame
+from src.input_format import InputFormat
+from src.output_format import OutputFormat
+from src.page import Page
+from src.paper_type import PaperType
 
 
 class Flipbook:
@@ -29,12 +33,13 @@ class Flipbook:
         # output directory for output for flipbook
         self.output_dir = output_dir
 
-        self.frame_settings = FrameSettings(
-                                filename,
-                                output_width,
-                                output_height,
-                                output_frame_rate,
-                                paper_type)
+        self.input = InputFormat(filename)
+        self.output = OutputFormat(
+            output_width,
+            output_height,
+            output_frame_rate,
+            PaperType.get(paper_type),
+        )
 
         self.n_flipbook_frames = None
 
@@ -42,18 +47,18 @@ class Flipbook:
         print('\n\n----------------------------')
         print(f'Input Video Info')
         print('----------------------------')
-        self.frame_settings.input_format.print()
+        self.input.print()
         print('\n----------------------------')
         print(f'Output Formatting Info')
         print('----------------------------')
-        self.frame_settings.output_format.print()
+        self.output.print()
         print('----------------------------\n\n')
 
     def grid_width(self):
-        return self.frame_settings.output_format.paper_type.value.xres()
+        return self.output.paper_type.value.xres()
 
     def grid_height(self):
-        return self.frame_settings.output_format.paper_type.value.yres()
+        return self.output.paper_type.value.yres()
 
     def create_output_dir(self):
         output_dir_path = Path(self.output_dir)
@@ -71,11 +76,11 @@ class Flipbook:
 
     def extract_frames(self):
         # Input and output frame rates
-        fps_in = self.frame_settings.input_format.frame_rate
-        fps_out = self.frame_settings.output_format.frame_rate
+        fps_in = self.input.frame_rate
+        fps_out = self.output.frame_rate
 
         # Open the file and open stream
-        cam = cv2.VideoCapture(self.frame_settings.input_format.filename)
+        cam = cv2.VideoCapture(self.input.filename)
 
         # Create a directory for the extracted frames
         self.create_output_dir()
@@ -83,13 +88,13 @@ class Flipbook:
         # Cycle through the frames
         index_out = 0
         frames = []
-        for index_in in range(self.frame_settings.input_format.total_frames):
+        for index_in in range(self.input.total_frames):
             # Read the frame
             success, frame = cam.read()
 
             if not success:
                 # Before breaking, update with the accurate number of frames
-                self.frame_settings.input_format.total_frames = index_in
+                self.input.total_frames = index_in
                 break
 
             # otherwise we process the frame
@@ -98,10 +103,10 @@ class Flipbook:
                 success, frame = cam.retrieve()
                 if not success:
                     # Before breaking, update with the accurate number of frames
-                    self.frame_settings.input_format.total_frames = index_in
+                    self.input.total_frames = index_in
                     break
                 # otherwise we process the frame
-                frames.append(Frame(frame, index_out, self.frame_settings))
+                frames.append(Frame(frame, index_out, self.input, self.output))
                 index_out += 1
 
         self.n_flipbook_frames = index_out
@@ -113,7 +118,7 @@ class Flipbook:
         '''
         Base file name is based on input file name
         '''
-        return Path(self.frame_settings.input_format.filename).stem
+        return Path(self.input.filename).stem
 
     def get_output_name(self, batch_no=None):
         if batch_no is None:
@@ -139,7 +144,7 @@ class Flipbook:
 
     def write_output_pdfs(self, frames):
         # total number of images per page
-        num_per_page = self.frame_settings.output_format.frames_per_page()
+        num_per_page = self.output.frames_per_page()
 
         # number of pages to write
         num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
