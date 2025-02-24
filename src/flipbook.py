@@ -131,7 +131,6 @@ class Flipbook:
         grid = Image.new('RGB', (self.grid_width(), self.grid_height()), (255, 255, 255, 255))
 
         for frame in frames:
-            # lek
             img = frame.get_frame()
             offset = frame.get_offset() # tuple wxh
             grid.paste(img, offset)

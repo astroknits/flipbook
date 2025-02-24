@@ -1,12 +1,12 @@
 import cv2
-from PIL import Image
+from PIL import Image, ImageOps
 from PIL import ImageDraw
 from PIL import ImageFont
 
 from src.flipbook_constants import FlipbookConstants
 from src.input_format import InputFormat
 from src.output_format import OutputFormat
-from src.padding import EqualPadding, LeftPadding, ZeroPadding
+from src.padding import EqualPadding, LeftPadding, ZeroPadding, HorizontalPadding, VerticalPadding
 from src.paper_type import PaperType
 
 
@@ -31,6 +31,9 @@ class FrameSettings:
 
         # Get the padding values in each dimension
         self.padding = self.get_frame_border_padding() + self.get_left_binding_padding()
+
+    def frames_per_page(self):
+        return self.output_format.frames_per_page()
 
     def get_frame_border_padding(self):
         # TODO add logic
@@ -80,19 +83,12 @@ class Frame:
         return self.frame
 
     def __set_frame(self, img):
-        frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        frame = Image.fromarray(frame.astype('uint8'), 'RGB')
+        frame = Image.new('RGB', (self.frame_settings.output_width(), self.frame_settings.output_height()), (255, 255, 255, 255))
+
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(img.astype('uint8'), 'RGB')
 
         # resize based on output size
-        # How do we do this?
-        # Do we want an absolute padding to be set by script?
-        #    Yes.
-        # Do we want absolute left padding to be set by script?
-        #    Yes.
-        # OK.  then, we need to do a calculation.
-        # canvas_width = output width - padding.left - padding.right
-        # canvas_height = output_height - padding.top - padding.bottom
-
         canvas_width = self.frame_settings.canvas_width()
         canvas_height = self.frame_settings.canvas_height()
 
@@ -104,39 +100,55 @@ class Frame:
         canvas_aspect = canvas_height/canvas_width
         print(f'canvas_aspect: {canvas_aspect}')
 
+        resize_width = input_width
+        resize_height = input_height
+
         # Check which dimension to fit to the canvas
-        if input_aspect >= canvas_aspect:
+        if input_aspect > canvas_aspect:
             # rel input_height >= rel canvas_height
             # input frame aspect ratio is taller than canvas
             # fit to canvas height
             resize_height = canvas_height
             resize_width = int(input_aspect * resize_height)
+            self.canvas_padding = HorizontalPadding(canvas_width - resize_width)
         else:
             # rel input_height < rel canvas_height
             # input frame aspect ratio is shorter than canvas
             # fit to canvas width
             resize_width = canvas_width
             resize_height = int(resize_width / input_aspect)
+            self.canvas_padding = VerticalPadding(canvas_height - resize_height)
 
-        print(f'input: {input_width}x{input_height}')
-        print(f'canvas: {canvas_width}x{canvas_height}')
-        print(f'resize: {resize_width}x{resize_height}')
-        frame.resize((resize_width, resize_height))
+        img = img.resize((resize_width, resize_height))
 
+        padding = self.frame_settings.padding + self.canvas_padding
+
+        # offset:
+        x_offset = padding.left
+        y_offset = padding.bottom
+
+        frame.paste(img, (x_offset, y_offset))
+
+        frame = ImageOps.expand(frame, border=3, fill='black')
         # then add watermark to the frame
         self.add_watermark_to_img(frame)
         return frame
 
     def get_offset(self):
-        row = self.frame_no // self.frame_settings.output_format.ncols
-        col = self.frame_no % self.frame_settings.output_format.nrows
+        rel_frame_no = self.frame_no % self.frame_settings.frames_per_page()
 
-        width = self.frame_settings.output_height()
+        row = rel_frame_no // self.frame_settings.output_format.nrows
+        col = rel_frame_no % self.frame_settings.output_format.nrows
+        print(f'frame {self.frame_no} (rel) {rel_frame_no}: row x col: {row},{col}')
+        print(f'    row = {rel_frame_no} // {self.frame_settings.output_format.ncols}')
+        print(f'    col = {rel_frame_no} % {self.frame_settings.output_format.nrows}')
+
+        width = self.frame_settings.output_width()
         height = self.frame_settings.output_height()
 
         offset_width = width * col
         offset_height = height * row
-
+        print(f'    {offset_width}, {offset_height}')
         return offset_width, offset_height
 
     def draw_border(self):
@@ -161,6 +173,6 @@ class Frame:
         height_pos = self.frame_settings.output_height() - (self.frame_settings.padding.bottom + text_height)
         position = (0, height_pos)
         print(f'adding watermark to image. {self.frame_no}, at {position}')
-        draw.text(position, watermark_text, font=font, fill=text_color)
+        draw.text(position, watermark_text, font=font, fill='black')
 
 
