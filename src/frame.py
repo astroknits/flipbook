@@ -96,9 +96,7 @@ class Frame:
         input_height = self.settings.input_height()
 
         input_aspect = input_height/input_width
-        print(f'input_aspect: {input_aspect}')
         canvas_aspect = canvas_height/canvas_width
-        print(f'canvas_aspect: {canvas_aspect}')
 
         resize_width = input_width
         resize_height = input_height
@@ -109,7 +107,7 @@ class Frame:
             # input frame aspect ratio is taller than canvas
             # fit to canvas height
             resize_height = canvas_height
-            resize_width = int(input_aspect * resize_height)
+            resize_width = int(resize_height / input_aspect)
             self.canvas_padding = HorizontalPadding(canvas_width - resize_width)
         else:
             # rel input_height < rel canvas_height
@@ -119,6 +117,7 @@ class Frame:
             resize_height = int(resize_width / input_aspect)
             self.canvas_padding = VerticalPadding(canvas_height - resize_height)
 
+        print(f'Resizing from {input_width}x{input_height} to {resize_width}x{resize_height}')
         img = img.resize((resize_width, resize_height))
 
         padding = self.settings.padding + self.canvas_padding
@@ -164,7 +163,6 @@ class Frame:
         width_pos = self.settings.padding.bottom
         height_pos = self.settings.output_height() - (self.settings.padding.bottom + text_height)
         position = (width_pos, height_pos)
-        print(f'adding watermark to image. {self.frame_no}, at {position}')
         draw.text(position, watermark_text, font=font, fill='black')
 
 
