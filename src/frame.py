@@ -16,13 +16,15 @@ class Frame:
                  frame_no,
                  input_width,
                  input_height,
-                 output
+                 output_width,
+                 output_height,
                  ):
         self.frame_no = frame_no
         self.input_width = input_width
         self.input_height = input_height
         self.input_aspect = input_height/input_width
-        self.output = output
+        self.output_width = output_width
+        self.output_height = output_height
 
         # Get the padding values in each dimension
         self.padding = self.get_frame_border_padding() + \
@@ -41,17 +43,11 @@ class Frame:
         # TODO add logic
         return LeftPadding(pad)
 
-    def output_width(self):
-        return self.output.xres()
-
-    def output_height(self):
-        return self.output.yres()
-
     def canvas_width(self):
-        return self.output_width() - self.padding.left - self.padding.right
+        return self.output_width - self.padding.left - self.padding.right
 
     def canvas_height(self):
-        return self.output_height() - self.padding.top - self.padding.bottom
+        return self.output_height - self.padding.top - self.padding.bottom
 
     def print(self):
         print(f'Frame border padding: {self.get_frame_border_padding()}')
@@ -64,7 +60,7 @@ class Frame:
         return self.canvas_height()/self.canvas_width()
 
     def __set_frame(self, img):
-        frame = Image.new('RGB', (self.output_width(), self.output_height()), 'white')
+        frame = Image.new('RGB', (self.output_width, self.output_height), 'white')
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img.astype('uint8'), 'RGB')
@@ -101,18 +97,6 @@ class Frame:
         self.add_watermark_to_img(frame)
         return frame
 
-    def get_offset(self):
-        # Get the offset on which to paste the whole frame including padding
-        rel_frame_no = self.frame_no % self.output.frames_per_page()
-
-        row = rel_frame_no // self.output.nrows
-        col = rel_frame_no % self.output.nrows
-
-        offset_width = self.output_width() * col
-        offset_height = self.output_height() * row
-
-        return offset_width, offset_height
-
     def add_watermark_to_img(self, img):
         # Add the frame number as a watermark text on the bottom left corner
         watermark_text = str(self.frame_no)
@@ -128,7 +112,7 @@ class Frame:
         # Position at bottom left-hand corner of the image
         # Add left padding to match the bottom padding
         x_pos = self.padding.bottom
-        y_pos = self.output_height() - (self.padding.bottom + text_height)
+        y_pos = self.output_height - (self.padding.bottom + text_height)
         position = (x_pos, y_pos)
 
         # Draw the watermark

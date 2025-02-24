@@ -58,3 +58,19 @@ class Output:
         print(f'Frame rate: {self.frame_rate:.2f} fps')
         print(f'Page format: {self.paper_type.value.name}')
         print(f'Page aspect ratio: {self.paper_type.value.aspect:.2f}')
+
+    def get_offset(self, frame_no):
+        # Get the offset on which to paste the whole frame including padding
+        rel_frame_no = frame_no % self.frames_per_page()
+
+        row = rel_frame_no // self.nrows
+        col = rel_frame_no % self.nrows
+
+        offset_width = self.xres() * col
+        offset_height = self.yres() * row
+
+        return offset_width, offset_height
+
+    def write(self):
+        pass
+

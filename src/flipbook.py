@@ -110,10 +110,11 @@ class Flipbook:
                 frame_no,
                 self.input.width,
                 self.input.height,
-                self.output
+                self.output.xres(),
+                self.output.yres(),
             )
             img = frame.get_frame()
-            offset = frame.get_offset() # tuple wxh
+            offset = self.output.get_offset(frame_no) # tuple wxh
             grid.paste(img, offset)
 
         grid.save(page_filename)
