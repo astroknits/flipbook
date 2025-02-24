@@ -1,6 +1,6 @@
 
 
-class OutputFormat:
+class Output:
     '''
     Settings for the layout of the output images
     intended to be printed.

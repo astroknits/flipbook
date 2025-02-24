@@ -4,8 +4,8 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 from src.flipbook_constants import FlipbookConstants
-from src.input_format import InputFormat
-from src.output_format import OutputFormat
+from src.input import Input
+from src.output import Output
 from src.padding import EqualPadding, LeftPadding, ZeroPadding, HorizontalPadding, VerticalPadding
 from src.paper_type import PaperType
 

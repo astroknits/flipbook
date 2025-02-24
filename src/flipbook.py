@@ -7,8 +7,8 @@ from PIL import Image
 from pypdf import PdfWriter
 
 from src.frame import Frame
-from src.input_format import InputFormat
-from src.output_format import OutputFormat
+from src.input import Input
+from src.output import Output
 from src.page import Page
 from src.paper_type import PaperType
 
@@ -33,8 +33,8 @@ class Flipbook:
         # output directory for output for flipbook
         self.output_dir = output_dir
 
-        self.input = InputFormat(filename)
-        self.output = OutputFormat(
+        self.input = Input(filename)
+        self.output = Output(
             output_width,
             output_height,
             output_frame_rate,
@@ -75,15 +75,15 @@ class Flipbook:
         return True
 
     def extract_frames(self):
+        # Create a directory for the extracted frames
+        self.create_output_dir()
+
         # Input and output frame rates
         fps_in = self.input.frame_rate
         fps_out = self.output.frame_rate
 
         # Open the file and open stream
         cam = cv2.VideoCapture(self.input.filename)
-
-        # Create a directory for the extracted frames
-        self.create_output_dir()
 
         # Cycle through the frames
         index_out = 0

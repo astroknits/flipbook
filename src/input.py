@@ -3,7 +3,7 @@ import cv2
 from src.flipbook_constants import FlipbookConstants
 
 
-class InputFormat:
+class Input:
     '''
     Class owning info about the input video file
     including file validation and metadata gathering
