@@ -73,7 +73,7 @@ class FrameSettings:
 class Frame:
     def __init__(self, img, frame_no, frame_settings):
         self.frame_no = frame_no
-        self.frame_settings = frame_settings
+        self.settings = frame_settings
         self.frame = self.__set_frame(img)
 
         # Initialize frame padding to zero
@@ -83,17 +83,17 @@ class Frame:
         return self.frame
 
     def __set_frame(self, img):
-        frame = Image.new('RGB', (self.frame_settings.output_width(), self.frame_settings.output_height()), (255, 255, 255, 255))
+        frame = Image.new('RGB', (self.settings.output_width(), self.settings.output_height()), 'white')
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img.astype('uint8'), 'RGB')
 
         # resize based on output size
-        canvas_width = self.frame_settings.canvas_width()
-        canvas_height = self.frame_settings.canvas_height()
+        canvas_width = self.settings.canvas_width()
+        canvas_height = self.settings.canvas_height()
 
-        input_width = self.frame_settings.input_width()
-        input_height = self.frame_settings.input_height()
+        input_width = self.settings.input_width()
+        input_height = self.settings.input_height()
 
         input_aspect = input_height/input_width
         print(f'input_aspect: {input_aspect}')
@@ -121,7 +121,7 @@ class Frame:
 
         img = img.resize((resize_width, resize_height))
 
-        padding = self.frame_settings.padding + self.canvas_padding
+        padding = self.settings.padding + self.canvas_padding
 
         # offset:
         x_offset = padding.left
@@ -135,42 +135,29 @@ class Frame:
         return frame
 
     def get_offset(self):
-        rel_frame_no = self.frame_no % self.frame_settings.frames_per_page()
+        rel_frame_no = self.frame_no % self.settings.frames_per_page()
 
-        row = rel_frame_no // self.frame_settings.output_format.nrows
-        col = rel_frame_no % self.frame_settings.output_format.nrows
-        print(f'frame {self.frame_no} (rel) {rel_frame_no}: row x col: {row},{col}')
-        print(f'    row = {rel_frame_no} // {self.frame_settings.output_format.ncols}')
-        print(f'    col = {rel_frame_no} % {self.frame_settings.output_format.nrows}')
+        row = rel_frame_no // self.settings.output_format.nrows
+        col = rel_frame_no % self.settings.output_format.nrows
 
-        width = self.frame_settings.output_width()
-        height = self.frame_settings.output_height()
+        width = self.settings.output_width()
+        height = self.settings.output_height()
 
         offset_width = width * col
         offset_height = height * row
-        print(f'    {offset_width}, {offset_height}')
-        return offset_width, offset_height
 
-    def draw_border(self):
-        grid = None
-        draw = ImageDraw.Draw(grid)
-        # draw vertical and horizontal lines at end of each frame
-        end_of_width = offset_width + self.frame_width() + self.pad()
-        end_of_height = offset_height + self.frame_height() + self.pad()
-        draw.line((end_of_width, 0, end_of_width, end_of_height), fill=0, width=2)
-        draw.line((0, end_of_height, end_of_width, end_of_height), fill=0, width=2)
+        return offset_width, offset_height
 
     def add_watermark_to_img(self, img):
         watermark_text = str(self.frame_no)
         # https://www.tutorialspoint.com/python_pillow/python_pillow_creating_a_watermark.htm
         draw = ImageDraw.Draw(img)
         font = ImageFont.truetype(FlipbookConstants.Font.DEFAULT, FlipbookConstants.Font.SIZE)
-        text_color = (255, 255, 255)
         text_width, text_height = draw.textsize(watermark_text, font)
 
         # Position at bottom left-hand corner of the image
-        height_pos = self.frame_settings.output_height() - text_height - self.frame_settings.padding.bottom
-        height_pos = self.frame_settings.output_height() - (self.frame_settings.padding.bottom + text_height)
+        height_pos = self.settings.output_height() - text_height - self.settings.padding.bottom
+        height_pos = self.settings.output_height() - (self.settings.padding.bottom + text_height)
         position = (0, height_pos)
         print(f'adding watermark to image. {self.frame_no}, at {position}')
         draw.text(position, watermark_text, font=font, fill='black')

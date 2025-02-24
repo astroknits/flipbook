@@ -143,7 +143,6 @@ class Flipbook:
 
         # number of pages to write
         num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
-        print(f'Num pages: {num_pages_to_print}')
 
         for batch_no in tqdm(
                 range(num_pages_to_print),

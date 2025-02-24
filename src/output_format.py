@@ -38,10 +38,10 @@ class OutputFormat:
         return self.height/self.width
 
     def get_nrows(self, height):
-        return int(self.paper_type.value.width // height)
+        return int(self.paper_type.value.height // height)
 
     def get_ncols(self, width):
-        return int(self.paper_type.value.height // width)
+        return int(self.paper_type.value.width // width)
 
     def frames_per_page(self):
         return self.nrows * self.ncols
