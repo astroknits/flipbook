@@ -4,14 +4,9 @@ from math import ceil
 from tqdm import tqdm
 import cv2
 from PIL import Image
-from PIL import ImageFont
-from PIL import ImageDraw
 from pypdf import PdfWriter
 
-from src.flipbook_constants import FlipbookConstants
-from src.input_format import InputFormat
-from src.output_format import OutputFormat
-from src.paper_type import PaperType
+from src.frame import FrameSettings, Frame
 
 
 class Flipbook:
@@ -23,28 +18,23 @@ class Flipbook:
             self,
             filename,
             output_dir,
-            ncols=3,
-            nrows=3,
+            output_width=5,
+            output_height=3,
             output_frame_rate=0,
             paper_type='letter',
-            frame_border_padding=50,
-            left_binding_padding=260,
              ):
 
-        # video file name
-        self.input_video = InputFormat(filename)
+        # output_width, output_height in inches
 
         # output directory for output for flipbook
         self.output_dir = output_dir
 
-        self.output_format = OutputFormat(
-                                nrows,
-                                ncols,
+        self.frame_settings = FrameSettings(
+                                filename,
+                                output_width,
+                                output_height,
                                 output_frame_rate,
-                                PaperType.get(paper_type),
-                                frame_border_padding,
-                                left_binding_padding,
-                            )
+                                paper_type)
 
         self.n_flipbook_frames = None
 
@@ -52,39 +42,18 @@ class Flipbook:
         print('\n\n----------------------------')
         print(f'Input Video Info')
         print('----------------------------')
-        self.input_video.print()
+        self.frame_settings.input_format.print()
         print('\n----------------------------')
         print(f'Output Formatting Info')
         print('----------------------------')
-        self.output_format.print()
+        self.frame_settings.output_format.print()
         print('----------------------------\n\n')
 
-
-    def pad(self):
-        return self.output_format.frame_border_padding
-
-    def left_pad(self):
-        return self.output_format.left_binding_padding
-
-    def frame_width(self):
-        return self.input_video.width
-
-    def frame_height(self):
-        return self.input_video.height
-
-    def ncols(self):
-        return self.output_format.ncols
-
-    def nrows(self):
-        return self.output_format.nrows
-
     def grid_width(self):
-        # return int((self.frame_width() + 2 * self.pad() + self.left_pad()) * self.ncols())
-        return self.output_format.paper_format.value.xres()
+        return self.frame_settings.output_format.paper_type.value.xres()
 
     def grid_height(self):
-        # return int((self.frame_height() + 2 * self.pad()) * self.nrows())
-        return self.output_format.paper_format.value.yres()
+        return self.frame_settings.output_format.paper_type.value.yres()
 
     def create_output_dir(self):
         output_dir_path = Path(self.output_dir)
@@ -102,11 +71,11 @@ class Flipbook:
 
     def extract_frames(self):
         # Input and output frame rates
-        fps_in = self.input_video.frame_rate
-        fps_out = self.output_format.frame_rate
+        fps_in = self.frame_settings.input_format.frame_rate
+        fps_out = self.frame_settings.output_format.frame_rate
 
         # Open the file and open stream
-        cam = cv2.VideoCapture(self.input_video.filename)
+        cam = cv2.VideoCapture(self.frame_settings.input_format.filename)
 
         # Create a directory for the extracted frames
         self.create_output_dir()
@@ -114,13 +83,13 @@ class Flipbook:
         # Cycle through the frames
         index_out = 0
         frames = []
-        for index_in in range(self.input_video.total_frames):
+        for index_in in range(self.frame_settings.input_format.total_frames):
             # Read the frame
             success, frame = cam.read()
 
             if not success:
                 # Before breaking, update with the accurate number of frames
-                self.input_video.total_frames = index_in
+                self.frame_settings.input_format.total_frames = index_in
                 break
 
             # otherwise we process the frame
@@ -129,10 +98,10 @@ class Flipbook:
                 success, frame = cam.retrieve()
                 if not success:
                     # Before breaking, update with the accurate number of frames
-                    self.input_video.total_frames = index_in
+                    self.frame_settings.input_format.total_frames = index_in
                     break
                 # otherwise we process the frame
-                frames.append(frame)
+                frames.append(Frame(frame, index_out, self.frame_settings))
                 index_out += 1
 
         self.n_flipbook_frames = index_out
@@ -144,7 +113,7 @@ class Flipbook:
         '''
         Base file name is based on input file name
         '''
-        return Path(self.input_video.filename).stem
+        return Path(self.frame_settings.input_format.filename).stem
 
     def get_output_name(self, batch_no=None):
         if batch_no is None:
@@ -152,18 +121,6 @@ class Flipbook:
         else:
             filename = f'{self.get_base_output_name()}.{str(batch_no)}.pdf'
         return Path(self.output_dir).joinpath(Path(filename))
-
-    def add_watermark_to_img(self, img, watermark_text):
-        # https://www.tutorialspoint.com/python_pillow/python_pillow_creating_a_watermark.htm
-        draw = ImageDraw.Draw(img)
-        font_size = 50
-        font = ImageFont.truetype(FlipbookConstants.Font.DEFAULT, font_size)
-        text_color = (255, 255, 255)
-        text_width, text_height = draw.textsize(watermark_text, font)
-
-        # Position at bottom left-hand corner of the image
-        position = (self.pad(), self.frame_height() - text_height - self.pad())
-        draw.text(position, watermark_text, font=font, fill=text_color)
 
 
     def write_tiled_batch(self, frames, batch_no):
@@ -173,32 +130,17 @@ class Flipbook:
         # https://stackoverflow.com/questions/37921295/python-pil-image-make-3x3-grid-from-sequence-images
         grid = Image.new('RGB', (self.grid_width(), self.grid_height()), (255, 255, 255, 255))
 
-        for frame_no, frame in enumerate(frames):
-            row = frame_no // self.output_format.ncols
-            col = frame_no % self.output_format.nrows
-
-            # https://stackoverflow.com/questions/10965417/how-to-convert-a-numpy-array-to-pil-image-applying-matplotlib-colormap
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            img = Image.fromarray(frame.astype('uint8'),'RGB')
-
-            self.add_watermark_to_img(img, str(frame_no + batch_no * len(frames) + 1))
-
-            offset_width = int((self.frame_width() + 2 * self.pad() + self.left_pad()) * col + self.pad() + self.left_pad())
-            offset_height = int((self.frame_height() + 2 * self.pad()) * row + self.pad())
-            grid.paste(img, (offset_width, offset_height))
-            draw = ImageDraw.Draw(grid)
-
-            # draw vertical and horizontal lines at end of each frame
-            end_of_width = offset_width + self.frame_width() + self.pad()
-            end_of_height = offset_height + self.frame_height() + self.pad()
-            draw.line((end_of_width, 0, end_of_width, end_of_height), fill=0, width=2)
-            draw.line((0, end_of_height, end_of_width, end_of_height), fill=0, width=2)
+        for frame in frames:
+            # lek
+            img = frame.get_frame()
+            offset = frame.get_offset() # tuple wxh
+            grid.paste(img, offset)
 
         grid.save(batch_filename)
 
     def write_output_pdfs(self, frames):
         # total number of images per page
-        num_per_page = self.output_format.nrows * self.output_format.ncols
+        num_per_page = self.frame_settings.output_format.frames_per_page()
 
         # number of pages to write
         num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)

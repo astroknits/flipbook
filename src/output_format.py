@@ -14,31 +14,45 @@ class OutputFormat:
     flipbook dimension and work backwards to calculate how many frames
     will fit per page,
     '''
-    def __init__(self, nrows, ncols, frame_rate, paper_format, frame_border_padding, left_binding_padding):
-        # Number of rows and columns to arrange flipbook frames in a page
-        self.nrows = nrows
-        self.ncols = ncols
+    def __init__(self, width, height, frame_rate, paper_type, dpi=300):
+
+        # width of output flipbook, in inches
+        self.width = width
+
+        # height of output flipbook, in inches
+        self.height = height
+
+        # dots per inch
+        self.dpi = dpi
 
         # Output frame rate for downsampling the video
         self.frame_rate = frame_rate
 
         # Select output paper format for printing
-        self.paper_format = paper_format
+        self.paper_type = paper_type
 
-        # How many pixels border padding to add around each frame (default 50)
-        # TODO calculate automatically based on more meaningful params
-        self.frame_border_padding = frame_border_padding
+        # Number of rows and columns to arrange flipbook frames in a page
+        self.nrows = self.get_nrows(height)
+        self.ncols = self.get_ncols(width)
 
-        # How many additional pixels to pad on the left hand side of the frame
-        # (for the binding)
-        # TODO calculate automatically based on more meaningful params
-        self.left_binding_padding = left_binding_padding
+    def get_nrows(self, height):
+        return int(self.paper_type.value.width // height)
+
+    def get_ncols(self, width):
+        return int(self.paper_type.value.height // width)
+
+    def frames_per_page(self):
+        return self.nrows * self.ncols
+
+    def xres(self):
+        return self.width * self.dpi
+
+    def yres(self):
+        return self.height * self.dpi
 
     def print(self):
         print(f'ncols: {self.ncols}')
         print(f'nrows: {self.nrows}')
         print(f'Frame rate: {self.frame_rate:.2f} fps')
-        print(f'Page format: {self.paper_format.value.name}')
-        print(f'Page aspect ratio: {self.paper_format.value.aspect:.2f}')
-        print(f'Frame border padding: {self.frame_border_padding}')
-        print(f'Left binding padding: {self.left_binding_padding}')
+        print(f'Page format: {self.paper_type.value.name}')
+        print(f'Page aspect ratio: {self.paper_type.value.aspect:.2f}')

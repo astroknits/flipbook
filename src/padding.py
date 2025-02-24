@@ -27,5 +27,5 @@ class LeftPadding(Padding):
     Pad left side only
     '''
     def __init__(self, pad):
-        super().__init__(pad, 0, 0, 0, 0)
+        super().__init__(pad, 0, 0, 0)
 

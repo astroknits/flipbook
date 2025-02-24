@@ -6,4 +6,5 @@ class FlipbookConstants:
 
     class Font:
         DEFAULT = 'fonts/arial.ttf'
+        SIZE = 50
 
