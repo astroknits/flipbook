@@ -11,9 +11,17 @@ from src.paper_type import PaperType
 
 
 class Frame:
-    def __init__(self, img, frame_no, input, output):
+    def __init__(self,
+                 img,
+                 frame_no,
+                 input_width,
+                 input_height,
+                 output
+                 ):
         self.frame_no = frame_no
-        self.input = input
+        self.input_width = input_width
+        self.input_height = input_height
+        self.input_aspect = input_height/input_width
         self.output = output
 
         # Get the padding values in each dimension
@@ -32,12 +40,6 @@ class Frame:
     def get_left_binding_padding(self, pad=260):
         # TODO add logic
         return LeftPadding(pad)
-
-    def input_width(self):
-        return self.input.width
-
-    def input_height(self):
-        return self.input.height
 
     def output_width(self):
         return self.output.xres()
@@ -58,9 +60,6 @@ class Frame:
     def get_frame(self):
         return self.frame
 
-    def input_aspect(self):
-        return self.input_height()/self.input_width()
-
     def canvas_aspect(self):
         return self.canvas_height()/self.canvas_width()
 
@@ -72,19 +71,19 @@ class Frame:
 
         # resize based on output size
         # Check which dimension to fit to the canvas
-        if self.input_aspect() > self.canvas_aspect():
+        if self.input_aspect > self.canvas_aspect():
             # rel input_height >= rel canvas_height
             # input frame aspect ratio is taller than canvas
             # fit to canvas height
             resize_height = self.canvas_height()
-            resize_width = int(resize_height / self.input_aspect())
+            resize_width = int(resize_height / self.input_aspect)
             self.canvas_padding = HorizontalPadding(self.canvas_width() - resize_width)
         else:
             # rel input_height < rel canvas_height
             # input frame aspect ratio is shorter than canvas
             # fit to canvas width
             resize_width = self.canvas_width()
-            resize_height = int(resize_width / self.input_aspect())
+            resize_height = int(resize_width / self.input_aspect)
             self.canvas_padding = VerticalPadding(self.canvas_height() - resize_height)
 
         img = img.resize((resize_width, resize_height))
