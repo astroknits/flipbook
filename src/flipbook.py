@@ -54,10 +54,10 @@ class Flipbook:
         self.output.print()
         print('----------------------------\n\n')
 
-    def grid_width(self):
+    def page_xres(self):
         return self.output.paper_type.value.xres()
 
-    def grid_height(self):
+    def page_yres(self):
         return self.output.paper_type.value.yres()
 
     def create_output_dir(self):
@@ -102,7 +102,7 @@ class Flipbook:
         # Get file name for batch
         page_filename = self.get_output_name(page_no)
 
-        grid = Image.new('RGB', (self.grid_width(), self.grid_height()), 'white')
+        grid = Image.new('RGB', (self.page_xres(), self.page_yres()), 'white')
 
         for (frame_no, data) in frames:
             frame = Frame(data, frame_no, self.input, self.output)
