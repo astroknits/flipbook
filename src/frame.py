@@ -81,7 +81,7 @@ class Frame:
             # input frame aspect ratio is shorter than canvas
             # fit to canvas width
             resize_width = self.canvas_width()
-            resize_height = int(resize_width / self.input_aspect)
+            resize_height = int(resize_width * self.input_aspect)
             pad = self.canvas_height() - resize_height
             self.canvas_padding = VerticalPadding(pad)
 

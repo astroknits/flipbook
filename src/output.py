@@ -19,10 +19,10 @@ class Output:
         self.dpi = dpi
 
         # frame width in pixels
-        self.frame_output_width = frame_output_width * dpi
+        self.frame_output_width = int(frame_output_width * dpi)
 
         # frame height in pixels
-        self.frame_output_height = frame_output_height * dpi
+        self.frame_output_height = int(frame_output_height * dpi)
 
         # Number of rows and columns to arrange flipbook frames in a page
         self.nrows = self.get_nrows()
