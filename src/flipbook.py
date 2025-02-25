@@ -6,7 +6,6 @@ from pypdf import PdfWriter
 
 from src.input import Input
 from src.output import Output
-from src.page import Page
 from src.paper_type import PaperType
 
 
@@ -31,14 +30,13 @@ class Flipbook:
         self.output_dir = output_dir
 
         self.input = Input(input_filename)
-        self.output = Output(
-            output_width,
-            output_height,
-            output_frame_rate,
-        )
-        self.page = Page(
+
+        self.output_frame_rate = output_frame_rate
+
+        self.page = Output(
             PaperType.get(paper_type),
-            self.output
+            output_width,
+            output_height
         )
 
         self.n_flipbook_frames = None
@@ -51,7 +49,7 @@ class Flipbook:
         print('\n----------------------------')
         print(f'Output Formatting Info')
         print('----------------------------')
-        self.output.print()
+        self.page.print_info()
         print('----------------------------\n\n')
 
     def create_output_dir(self):
@@ -73,7 +71,7 @@ class Flipbook:
         self.create_output_dir()
 
         # extract the frames from the input video
-        frames = self.input.extract_frames(self.output.frame_rate)
+        frames = self.input.extract_frames(self.output_frame_rate)
 
         self.n_flipbook_frames = len(frames)
 

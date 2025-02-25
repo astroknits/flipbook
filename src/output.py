@@ -1,28 +1,94 @@
+from PIL import Image
+from src.frame import Frame
+
 
 class Output:
-    '''
-    Flipbook output parameters
-    Right now we just need to know:
-    * the flipbook output dimensions (w x h)
-    * the flipbook frame rate
-    '''
     def __init__(self,
-                 width,
-                 height,
-                 frame_rate,
+                 paper_type,
+                 frame_width,
+                 frame_height,
+                 frame_border_padding=50,
+                 left_frame_padding=260,
+                 dpi=300
                  ):
 
-        # width of output flipbook, in inches
-        self.width_inches = width
+        # Select output paper format for printing
+        self.paper_type = paper_type
 
-        # height of output flipbook, in inches
-        self.height_inches = height
+        # dots per inch
+        self.dpi = dpi
 
-        # Output frame rate for downsampling the video
-        self.frame_rate = frame_rate
+        # frame width in pixels
+        self.frame_width = frame_width * dpi
 
-    def aspect(self):
-        return self.height_inches / self.width_inches
+        # frame height in pixels
+        self.frame_height = frame_height * dpi
 
-    def print(self):
-        print(f'Frame rate: {self.frame_rate:.2f} fps')
+        # Number of rows and columns to arrange flipbook frames in a page
+        self.nrows = self.get_nrows()
+        self.ncols = self.get_ncols()
+
+        self.frame_border_padding = frame_border_padding
+
+        self.left_frame_padding = left_frame_padding
+
+    def print_info(self):
+        print(f'Flipbook frame size: {self.frame_width}x{self.frame_height}')
+        print(f'Paper type: {self.paper_type.value.name}')
+        print(f'Printer dpi: {self.dpi}')
+        print(f'nrows x ncols: {self.nrows}x{self.ncols}')
+        print(f'frame_border_padding: {self.frame_border_padding}')
+        print(f'left_frame_padding: {self.left_frame_padding}')
+
+    def get_nrows(self):
+        return int(self.paper_type.value.height // self.frame_height)
+
+    def get_ncols(self):
+        return int(self.paper_type.value.width // self.frame_width)
+
+    def get_frames_per_page(self):
+        return self.nrows * self.ncols
+
+    def get_offset(self, frame_no):
+        # Get the offset on which to paste the whole frame on the page including padding
+        rel_frame_no = frame_no % self.get_frames_per_page()
+
+        row = rel_frame_no // self.nrows
+        col = rel_frame_no % self.nrows
+
+        offset_width = self.frame_width * col
+        offset_height = self.frame_height * row
+
+        return offset_width, offset_height
+
+    def write_page(self, frames, page_filename, input_width, input_height):
+        page = Image.new('RGB', (self.paper_type.value.width, self.paper_type.value.height), 'white')
+
+        for (frame_no, data) in frames:
+            # create frame object based on image data,
+            # frame number, and input/output dimensions
+            # and desired padding
+            frame = Frame(
+                data,
+                frame_no,
+                input_width,
+                input_height,
+                self.frame_width,
+                self.frame_height,
+                self.frame_border_padding,
+                self.left_frame_padding,
+            )
+
+            # get image data for full frame including padding
+            img = frame.get_frame()
+
+            # determine global pixel offset on the page
+            # based on the frame number, ie. the row/column where the
+            # frame should be tiled
+            offset = self.get_offset(frame_no)
+
+            # paste the image on the page
+            page.paste(img, offset)
+
+        page.save(page_filename)
+
