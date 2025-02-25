@@ -102,22 +102,8 @@ class Flipbook:
         # Get file name for batch
         page_filename = self.get_output_name(page_no)
 
-        grid = Image.new('RGB', (self.page_xres(), self.page_yres()), 'white')
+        self.output.write(frames, page_filename, self.input.width, self.input.height)
 
-        for (frame_no, data) in frames:
-            frame = Frame(
-                data,
-                frame_no,
-                self.input.width,
-                self.input.height,
-                self.output.xres(),
-                self.output.yres(),
-            )
-            img = frame.get_frame()
-            offset = self.output.get_offset(frame_no) # tuple wxh
-            grid.paste(img, offset)
-
-        grid.save(page_filename)
 
     def write_output_pdfs(self, frames):
         # total number of images per page

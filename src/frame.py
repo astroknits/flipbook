@@ -4,10 +4,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 from src.flipbook_constants import FlipbookConstants
-from src.input import Input
-from src.output import Output
 from src.padding import EqualPadding, LeftPadding, ZeroPadding, HorizontalPadding, VerticalPadding
-from src.paper_type import PaperType
 
 
 class Frame:
@@ -18,6 +15,8 @@ class Frame:
                  input_height,
                  output_width,
                  output_height,
+                 frame_border_padding,
+                 left_frame_padding
                  ):
         self.frame_no = frame_no
         self.input_width = input_width
@@ -27,20 +26,18 @@ class Frame:
         self.output_height = output_height
 
         # Get the padding values in each dimension
-        self.padding = self.get_frame_border_padding() + \
-                       self.get_left_binding_padding()
+        self.padding = self.get_frame_border_padding(frame_border_padding) + \
+                       self.get_left_frame_padding(left_frame_padding)
 
         # Initialize frame padding to zero
         self.canvas_padding = ZeroPadding()
 
         self.frame = self.__set_frame(img)
 
-    def get_frame_border_padding(self, pad=50):
-        # TODO add logic
+    def get_frame_border_padding(self, pad):
         return EqualPadding(pad)
 
-    def get_left_binding_padding(self, pad=260):
-        # TODO add logic
+    def get_left_frame_padding(self, pad):
         return LeftPadding(pad)
 
     def canvas_width(self):
@@ -51,7 +48,7 @@ class Frame:
 
     def print(self):
         print(f'Frame border padding: {self.get_frame_border_padding()}')
-        print(f'Left binding padding: {self.get_left_binding_padding()}')
+        print(f'Left binding padding: {self.get_left_frame_padding()}')
 
     def get_frame(self):
         return self.frame
