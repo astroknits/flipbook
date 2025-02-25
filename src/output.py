@@ -5,8 +5,8 @@ from src.frame import Frame
 class Output:
     def __init__(self,
                  paper_type,
-                 frame_width,
-                 frame_height,
+                 frame_output_width,
+                 frame_output_height,
                  frame_border_padding=50,
                  left_frame_padding=260,
                  dpi=300
@@ -19,10 +19,10 @@ class Output:
         self.dpi = dpi
 
         # frame width in pixels
-        self.frame_width = frame_width * dpi
+        self.frame_output_width = frame_output_width * dpi
 
         # frame height in pixels
-        self.frame_height = frame_height * dpi
+        self.frame_output_height = frame_output_height * dpi
 
         # Number of rows and columns to arrange flipbook frames in a page
         self.nrows = self.get_nrows()
@@ -33,7 +33,7 @@ class Output:
         self.left_frame_padding = left_frame_padding
 
     def print_info(self):
-        print(f'Flipbook frame size: {self.frame_width}x{self.frame_height}')
+        print(f'Flipbook frame size: {self.frame_output_width}x{self.frame_output_height}')
         print(f'Paper type: {self.paper_type.value.name}')
         print(f'Printer dpi: {self.dpi}')
         print(f'nrows x ncols: {self.nrows}x{self.ncols}')
@@ -41,10 +41,10 @@ class Output:
         print(f'left_frame_padding: {self.left_frame_padding}')
 
     def get_nrows(self):
-        return int(self.paper_type.value.height // self.frame_height)
+        return int(self.paper_type.value.height // self.frame_output_height)
 
     def get_ncols(self):
-        return int(self.paper_type.value.width // self.frame_width)
+        return int(self.paper_type.value.width // self.frame_output_width)
 
     def get_frames_per_page(self):
         return self.nrows * self.ncols
@@ -56,13 +56,15 @@ class Output:
         row = rel_frame_no // self.nrows
         col = rel_frame_no % self.nrows
 
-        offset_width = self.frame_width * col
-        offset_height = self.frame_height * row
+        offset_width = self.frame_output_width * col
+        offset_height = self.frame_output_height * row
 
         return offset_width, offset_height
 
-    def write_page(self, frames, page_filename, input_width, input_height):
-        page = Image.new('RGB', (self.paper_type.value.width, self.paper_type.value.height), 'white')
+    def write_page(self, frames, page_filename, frame_input_width, frame_input_height):
+        page = Image.new('RGB',
+                         (self.paper_type.value.width, self.paper_type.value.height),
+                         'white')
 
         for (frame_no, data) in frames:
             # create frame object based on image data,
@@ -71,10 +73,10 @@ class Output:
             frame = Frame(
                 data,
                 frame_no,
-                input_width,
-                input_height,
-                self.frame_width,
-                self.frame_height,
+                frame_input_width,
+                frame_input_height,
+                self.frame_output_width,
+                self.frame_output_height,
                 self.frame_border_padding,
                 self.left_frame_padding,
             )

@@ -33,7 +33,7 @@ class Flipbook:
 
         self.output_frame_rate = output_frame_rate
 
-        self.page = Output(
+        self.output = Output(
             PaperType.get(paper_type),
             output_width,
             output_height
@@ -49,7 +49,7 @@ class Flipbook:
         print('\n----------------------------')
         print(f'Output Formatting Info')
         print('----------------------------')
-        self.page.print_info()
+        self.output.print_info()
         print('----------------------------\n\n')
 
     def create_output_dir(self):
@@ -93,12 +93,11 @@ class Flipbook:
     def write_page(self, frames, page_no):
         # Get file name for batch
         page_filename = self.get_output_name(page_no)
-
-        self.page.write_page(frames, page_filename, self.input.width, self.input.height)
+        self.output.write_page(frames, page_filename, self.input.width, self.input.height)
 
     def write_output_pdfs(self, frames):
         # total number of images per page
-        num_per_page = self.page.get_frames_per_page()
+        num_per_page = self.output.get_frames_per_page()
 
         # number of pages to write
         num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
@@ -134,7 +133,6 @@ class Flipbook:
     def run(self):
         # Read the video and extract the frames
         frames = self.extract_frames()
-
-
         # Write the PDFs to output files
         self.write_output(frames)
+
