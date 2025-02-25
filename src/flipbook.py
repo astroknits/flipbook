@@ -6,6 +6,7 @@ from pypdf import PdfWriter
 
 from src.input import Input
 from src.output import Output
+from src.page import Page
 from src.paper_type import PaperType
 
 
@@ -34,7 +35,10 @@ class Flipbook:
             output_width,
             output_height,
             output_frame_rate,
+        )
+        self.page = Page(
             PaperType.get(paper_type),
+            self.output
         )
 
         self.n_flipbook_frames = None
@@ -92,12 +96,11 @@ class Flipbook:
         # Get file name for batch
         page_filename = self.get_output_name(page_no)
 
-        self.output.write_page(frames, page_filename, self.input.width, self.input.height)
-
+        self.page.write_page(frames, page_filename, self.input.width, self.input.height)
 
     def write_output_pdfs(self, frames):
         # total number of images per page
-        num_per_page = self.output.frames_per_page()
+        num_per_page = self.page.frames_per_page()
 
         # number of pages to write
         num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
