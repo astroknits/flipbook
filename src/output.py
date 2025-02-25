@@ -27,10 +27,16 @@ class Output:
                  ):
 
         # width of output flipbook, in inches
-        self.width = width
+        self.width_inches = width
+
+        # width in pixels
+        self.width = self.width_inches * dpi
 
         # height of output flipbook, in inches
-        self.height = height
+        self.height_inches = height
+
+        # height in pixels
+        self.height = self.height_inches * dpi
 
         # dots per inch
         self.dpi = dpi
@@ -50,22 +56,16 @@ class Output:
         self.left_frame_padding = left_frame_padding
 
     def aspect(self):
-        return self.height/self.width
+        return self.height_inches / self.width_inches
 
     def get_nrows(self, height):
-        return int(self.paper_type.value.height // height)
+        return int(self.paper_type.value.height_inches // height)
 
     def get_ncols(self, width):
-        return int(self.paper_type.value.width // width)
+        return int(self.paper_type.value.width_inches // width)
 
     def frames_per_page(self):
         return self.nrows * self.ncols
-
-    def xres(self):
-        return self.width * self.dpi
-
-    def yres(self):
-        return self.height * self.dpi
 
     def print(self):
         print(f'ncols: {self.ncols}')
@@ -81,13 +81,13 @@ class Output:
         row = rel_frame_no // self.nrows
         col = rel_frame_no % self.nrows
 
-        offset_width = self.xres() * col
-        offset_height = self.yres() * row
+        offset_width = self.width * col
+        offset_height = self.height * row
 
         return offset_width, offset_height
 
-    def write(self, frames, page_filename, input_width, input_height):
-        page = Image.new('RGB', (self.paper_type.value.xres(), self.paper_type.value.yres()), 'white')
+    def write_page(self, frames, page_filename, input_width, input_height):
+        page = Image.new('RGB', (self.paper_type.value.width, self.paper_type.value.height), 'white')
 
         for (frame_no, data) in frames:
             # create frame object based on image data,
@@ -98,8 +98,8 @@ class Output:
                 frame_no,
                 input_width,
                 input_height,
-                self.xres(),
-                self.yres(),
+                self.width,
+                self.height,
                 self.frame_border_padding,
                 self.left_frame_padding,
             )
@@ -110,7 +110,7 @@ class Output:
             # determine global pixel offset on the page
             # based on the frame number, ie. the row/column where the
             # frame should be tiled
-            offset = self.get_offset(frame_no) # tuple wxh
+            offset = self.get_offset(frame_no)
 
             # paste the image on the page
             page.paste(img, offset)

@@ -2,14 +2,10 @@ import os
 from pathlib import Path
 from math import ceil
 from tqdm import tqdm
-import cv2
-from PIL import Image
 from pypdf import PdfWriter
 
-from src.frame import Frame
 from src.input import Input
 from src.output import Output
-from src.page import Page
 from src.paper_type import PaperType
 
 
@@ -54,12 +50,6 @@ class Flipbook:
         self.output.print()
         print('----------------------------\n\n')
 
-    def page_xres(self):
-        return self.output.paper_type.value.xres()
-
-    def page_yres(self):
-        return self.output.paper_type.value.yres()
-
     def create_output_dir(self):
         output_dir_path = Path(self.output_dir)
         if Path.exists(output_dir_path):
@@ -102,7 +92,7 @@ class Flipbook:
         # Get file name for batch
         page_filename = self.get_output_name(page_no)
 
-        self.output.write(frames, page_filename, self.input.width, self.input.height)
+        self.output.write_page(frames, page_filename, self.input.width, self.input.height)
 
 
     def write_output_pdfs(self, frames):
