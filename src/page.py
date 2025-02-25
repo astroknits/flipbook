@@ -19,11 +19,11 @@ class Page:
         # dots per inch
         self.dpi = dpi
 
-        # width in pixels
-        self.width = self.output.width_inches * dpi
+        # frame width in pixels
+        self.frame_width = self.output.width_inches * dpi
 
-        # height in pixels
-        self.height = self.output.height_inches * dpi
+        # frame height in pixels
+        self.frame_height = self.output.height_inches * dpi
 
         # Number of rows and columns to arrange flipbook frames in a page
         self.nrows = self.get_nrows()
@@ -39,29 +39,28 @@ class Page:
     def get_ncols(self):
         return int(self.paper_type.value.width_inches // self.output.width_inches)
 
-    def frames_per_page(self):
+    def get_frames_per_page(self):
         return self.nrows * self.ncols
 
     def print_info(self):
         print(f'ncols: {self.ncols}')
         print(f'nrows: {self.nrows}')
         print(f'Page format: {self.paper_type.value.name}')
-        print(f'Page aspect ratio: {self.paper_type.value.aspect:.2f}')
 
     def get_offset(self, frame_no):
         # Get the offset on which to paste the whole frame on the page including padding
-        rel_frame_no = frame_no % self.frames_per_page()
+        rel_frame_no = frame_no % self.get_frames_per_page()
 
         row = rel_frame_no // self.nrows
         col = rel_frame_no % self.nrows
 
-        offset_width = self.width * col
-        offset_height = self.height * row
+        offset_width = self.frame_width * col
+        offset_height = self.frame_height * row
 
         return offset_width, offset_height
 
     def write_page(self, frames, page_filename, input_width, input_height):
-        page = Image.new('RGB', (self.paper_type.value.width, self.paper_type.value.height), 'white')
+        page = Image.new('RGB', (self.paper_type.value.frame_width, self.paper_type.value.frame_height), 'white')
 
         for (frame_no, data) in frames:
             # create frame object based on image data,
@@ -72,8 +71,8 @@ class Page:
                 frame_no,
                 input_width,
                 input_height,
-                self.width,
-                self.height,
+                self.frame_width,
+                self.frame_height,
                 self.frame_border_padding,
                 self.left_frame_padding,
             )

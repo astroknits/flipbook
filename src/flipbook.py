@@ -17,7 +17,7 @@ class Flipbook:
 
     def __init__(
             self,
-            filename,
+            input_filename,
             output_dir,
             output_width=5,
             output_height=3,
@@ -30,7 +30,7 @@ class Flipbook:
         # output directory for output for flipbook
         self.output_dir = output_dir
 
-        self.input = Input(filename)
+        self.input = Input(input_filename)
         self.output = Output(
             output_width,
             output_height,
@@ -100,7 +100,7 @@ class Flipbook:
 
     def write_output_pdfs(self, frames):
         # total number of images per page
-        num_per_page = self.page.frames_per_page()
+        num_per_page = self.page.get_frames_per_page()
 
         # number of pages to write
         num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
