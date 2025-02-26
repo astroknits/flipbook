@@ -53,8 +53,8 @@ class Output:
         # Get the offset on which to paste the whole frame on the page including padding
         rel_frame_no = frame_no % self.get_frames_per_page()
 
-        row = rel_frame_no // self.nrows
-        col = rel_frame_no % self.nrows
+        row = rel_frame_no // self.ncols
+        col = rel_frame_no % self.ncols
 
         offset_width = self.frame_output_width * col
         offset_height = self.frame_output_height * row
