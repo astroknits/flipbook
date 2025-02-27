@@ -3,7 +3,7 @@ import cv2
 from src.flipbook_constants import FlipbookConstants
 
 
-class InputFormat:
+class Input:
     '''
     Class owning info about the input video file
     including file validation and metadata gathering
@@ -37,6 +37,9 @@ class InputFormat:
         cam.release()
         cv2.destroyAllWindows()
 
+    def aspect(self):
+        return self.height/self.width
+
     def validate_video_file(self, filename):
         '''
         Check that the file provided exists on disk
@@ -51,6 +54,41 @@ class InputFormat:
                    f'(not one of {FlipbookConstants.Video.SUPPORTED_FORMATS})')
             raise Exception(msg)
         return filename
+
+    def extract_frames(self, fps_out):
+        # Input and output frame rates
+        fps_in = self.frame_rate
+
+        # Open the file and open stream
+        cam = cv2.VideoCapture(self.filename)
+
+        # Cycle through the frames
+        index_out = 0
+        frames = []
+        for index_in in range(self.total_frames):
+            # Read the frame
+            success, frame = cam.read()
+
+            if not success:
+                # Before breaking, update with the accurate number of frames
+                self.total_frames = index_in
+                break
+
+            # otherwise we process the frame
+            out_due = int(index_in / fps_in * fps_out)
+            if out_due > index_out:
+                success, frame = cam.retrieve()
+                if not success:
+                    # Before breaking, update with the accurate number of frames
+                    self.total_frames = index_in
+                    break
+                # otherwise we process the frame
+                frames.append((index_out, frame))
+                index_out += 1
+
+        cam.release()
+        cv2.destroyAllWindows()
+        return frames
 
     def get_resolution(self):
         '''

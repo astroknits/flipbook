@@ -5,8 +5,8 @@ class PaperType(Enum):
     '''
     Type of paper on which the flipbook will be printed
     '''
-    LETTER = PaperFormat('US Letter', 8.5, 11.0)
-    LEGAL = PaperFormat('US Legal', 8.5, 14.0)
+    LETTER = PaperFormat('US Letter',  11.0, 8.5)
+    LEGAL = PaperFormat('US Legal', 14.0, 8.5)
 
     @staticmethod
     def get(key):

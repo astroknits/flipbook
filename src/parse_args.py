@@ -15,6 +15,8 @@ def parse_args():
                               '(default None -> use stem of the input video file)'))
     parser.add_argument('-fr', '--output-frame-rate', type=float, default=3.0,
                         help=('Output frame rate for flipbook in fps (default 3.0fps)'))
+    parser.add_argument('-os', '--output-size', type=str, default='5x3',
+                        help=('Output flipbook frame size in inches (default 5x3)'))
     # Get the list of options for paper type from the PaperType enum
     paper_types = [e.name.lower() for e in PaperType]
     parser.add_argument('-p', '--paper-type', choices=paper_types, default='letter')
