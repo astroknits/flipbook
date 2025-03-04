@@ -1,4 +1,4 @@
-from src.padding import EqualPadding, LeftPadding
+from src.padding import EqualPadding, LeftPadding, Padding, HorizontalPadding, VerticalPadding
 
 
 class FlipbookOutput:
@@ -60,42 +60,41 @@ class FlipbookOutput:
         '''
         return float(self.canvas_height)/float(self.canvas_width)
 
+    def fit_to_height(self, input_aspect):
+        # Determine whether input height is greater than canvas height
+        return input_aspect > self.canvas_aspect
+
+    def get_resize_res(self, input_aspect):
+        # resize based on output size
+        # Check which dimension to fit to the canvas
+        if self.fit_to_height(input_aspect):
+            # rel input_height >= rel canvas_height
+            # input frame aspect ratio is taller than canvas
+            # fit to canvas height
+            resize_height = self.canvas_height
+            resize_width = int(resize_height / input_aspect)
+        else:
+            # rel input_height < rel canvas_height
+            # input frame aspect ratio is shorter than canvas
+            # fit to canvas width
+            resize_width = self.canvas_width
+            resize_height = int(resize_width * input_aspect)
+        return resize_width, resize_height
+
+    def get_padding(self, input_aspect) -> Padding:
+        # Calculate how much padding we need to add to the
+        # canvas to accommodate the newly resized source image
+        # to get the dimensions of the final flipbook frame
+        resize_width, resize_height = self.get_resize_res(input_aspect)
+
+        if self.fit_to_height(input_aspect):
+            return self.padding + HorizontalPadding(self.canvas_width - resize_width)
+        else:
+            return self.padding + VerticalPadding(self.canvas_height - resize_height)
+
+
     def print_info(self):
         print(f'Flipbook frame size: {self.frame_output_width}x{self.frame_output_height}')
         print(f'frame_border_padding: {self.frame_border_padding}')
         print(f'frame_left_padding: {self.frame_left_padding}')
 
-    '''
-        def get_frame_border_padding(self, pad: int) -> Padding:
-        ''
-        Returns equal padding applied to all sides.
-        ''
-        return EqualPadding(pad)
-
-    def get_left_frame_padding(self, pad: int) -> Padding:
-        ''
-        Returns left padding to account for the flipbook binding
-        ''
-        return LeftPadding(pad)
-
-    def canvas_width(self) -> int:
-        ''
-        Returns the drawable canvas width, accounting for padding and border width.
-        ''
-        horiz_padding = self.padding.left + self.padding.right + 2 * self.frame_border_line_width
-        return self.output_width - horiz_padding
-
-    def canvas_height(self) -> int:
-        ''
-        Returns the drawable canvas height, accounting for padding and border width.
-        ''
-        vert_padding = self.padding.top + self.padding.bottom + 2 * self.frame_border_line_width
-        return self.output_height - vert_padding
-
-    def canvas_aspect(self) -> float:
-        ''
-        Returns the aspect ratio of the canvas area
-        ''
-        return self.canvas_height()/self.canvas_width()
-
-    '''
