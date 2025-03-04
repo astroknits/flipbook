@@ -4,7 +4,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 from src.flipbook_constants import FlipbookConstants
-from src.padding import EqualPadding
+from src.padding import EqualPadding, Padding
 from src.padding import LeftPadding
 from src.padding import ZeroPadding
 from src.padding import HorizontalPadding
@@ -13,16 +13,30 @@ from src.padding import VerticalPadding
 
 class Frame:
     def __init__(self,
-                 data,
-                 frame_no,
-                 input_width,
-                 input_height,
-                 output_width,
-                 output_height,
-                 frame_border_padding,
-                 left_frame_padding,
-                 frame_border_line_width=3,
-                 ):
+                 data: cv2.UMat,
+                 frame_no: int,
+                 input_width: int,
+                 input_height: int,
+                 output_width: int,
+                 output_height: int,
+                 frame_border_padding: int,
+                 left_frame_padding: int,
+                 frame_border_line_width: int,
+                 ) -> None:
+        '''
+        Initializes a Frame object.
+
+        :param data: The image frame data (from OpenCV).
+        :param frame_no: The frame number in the sequence.
+        :param input_width: Original width of the frame.
+        :param input_height: Original height of the frame.
+        :param output_width: Desired width of the output frame.
+        :param output_height: Desired height of the output frame.
+        :param frame_border_padding: Padding around the frame.
+        :param left_frame_padding: Additional left padding.
+        :param frame_border_line_width: Border thickness.
+
+        '''
         self.data = data
         self.frame_no = frame_no
         self.input_width = input_width
@@ -30,39 +44,57 @@ class Frame:
         self.input_aspect = input_height/input_width
         self.output_width = output_width
         self.output_height = output_height
-
-        # decrease the frame_border_padding value by frame_border_line_width
-        # as this gets added after the frame has been created
-        frame_border_padding -= frame_border_line_width
-
-        # Get the padding values in each dimension
-        self.padding = self.get_frame_border_padding(frame_border_padding) + \
-                       self.get_left_frame_padding(left_frame_padding)
-
-        # Border line width, gets added after the fact
         self.frame_border_line_width = frame_border_line_width
 
-        # Initialize frame padding to zero
+        # Adjust padding to avoid double application of border padding
+        adjusted_padding = max(0, frame_border_padding - self.frame_border_line_width)
+
+        # Compute frame padding
+        self.padding = self.get_frame_border_padding(adjusted_padding) +\
+                       self.get_left_frame_padding(left_frame_padding)
+
+        # Initialize canvas padding (to be updated later)
         self.canvas_padding = ZeroPadding()
 
-    def get_frame_border_padding(self, pad):
+    def get_frame_border_padding(self, pad: int) -> Padding:
+        '''
+        Returns equal padding applied to all sides.
+        '''
         return EqualPadding(pad)
 
-    def get_left_frame_padding(self, pad):
+    def get_left_frame_padding(self, pad: int) -> Padding:
+        '''
+        Returns left padding to account for the flipbook binding
+        '''
         return LeftPadding(pad)
 
-    def canvas_width(self):
-        return self.output_width - self.padding.left - self.padding.right - 2 * self.frame_border_line_width
+    def canvas_width(self) -> int:
+        '''
+        Returns the drawable canvas width, accounting for padding and border width.
+        '''
+        horiz_padding = self.padding.left + self.padding.right + 2 * self.frame_border_line_width
+        return self.output_width - horiz_padding
 
-    def canvas_height(self):
-        return self.output_height - self.padding.top - self.padding.bottom - 2 * self.frame_border_line_width
+    def canvas_height(self) -> int:
+        '''
+        Returns the drawable canvas height, accounting for padding and border width.
+        '''
+        vert_padding = self.padding.top + self.padding.bottom + 2 * self.frame_border_line_width
+        return self.output_height - vert_padding
 
-    def canvas_aspect(self):
+    def canvas_aspect(self) -> float:
+        '''
+        Returns the aspect ratio of the canvas area
+        '''
         return self.canvas_height()/self.canvas_width()
 
-    def get_frame(self):
+    def get_frame(self) -> Image.Image:
+        '''
+        Generates and returns a frame with correct padding, aspect ratio adjustments, and watermark.
+        '''
         frame = Image.new('RGB', (self.output_width, self.output_height), 'white')
 
+        # Convert OpenCV image (BGR) to PIL Image (RGB)
         img = cv2.cvtColor(self.data, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img.astype('uint8'), 'RGB')
 
@@ -100,17 +132,24 @@ class Frame:
         self.add_watermark_to_img(frame)
         return frame
 
-    def add_watermark_to_img(self, img):
+    def add_watermark_to_img(self, img: Image.Image) -> None:
         # Add the frame number as a watermark text on the bottom left corner
         watermark_text = str(self.frame_no)
-
         draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype(
-            FlipbookConstants.Font.DEFAULT,
-            FlipbookConstants.Font.SIZE)
+
+        # Load font, with fallback
+        try:
+            font = ImageFont.truetype(
+                FlipbookConstants.Font.DEFAULT,
+                FlipbookConstants.Font.SIZE)
+        except (OSError, IOError):
+            print((f'Unable to load font {FlipbookConstants.Font.DEFAULT}.'
+                  '  loading default font'))
+            font = ImageFont.load_default() # fallback font
 
         # Get the text width/height (for help to calculate location to print)
-        text_width, text_height = draw.textsize(watermark_text, font)
+        bbox = draw.textbbox((0, 0), watermark_text, font=font)
+        text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
 
         # Position at bottom left-hand corner of the image
         # Add left padding to match the bottom padding

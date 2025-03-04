@@ -1,138 +1,118 @@
-import os
-from pathlib import Path
-from math import ceil
-from tqdm import tqdm
-from pypdf import PdfWriter
+from typing import List
 
-from src.input import Input
-from src.output import Output
-from src.paper_type import PaperType
+import cv2
 
+from src.frame import Frame
+from src.video_source import VideoSource
+from src.flipbook_output import FlipbookOutput
+from src.flipbook_printer import FlipbookPrinter
 
 class Flipbook:
-    '''
-    Class to create frames for flipbook from video file
-    '''
+    def __init__(self,
+                 video_source: VideoSource,
+                 flipbook_output: FlipbookOutput
+                 ) -> None:
+        '''
+        Initializes the Flipbook object.
 
-    def __init__(
-            self,
-            input_filename,
-            output_dir,
-            output_width=5,
-            output_height=3,
-            output_frame_rate=0,
-            paper_type='letter',
-             ):
+        :param video_source: VideoSource object containing input video info
+        :param flipbook_output: FlipbookOutput object containing output flipbook params
+        '''
+        self.video_source = video_source
+        self.flipbook_output = flipbook_output
 
-        # output_width, output_height in inches
+        # Initialize self.frames (to be updated later)
+        self.frames: List[Frame] = []
 
-        # output directory for output for flipbook
-        self.output_dir = output_dir
-
-        self.input = Input(input_filename)
-
-        self.output_frame_rate = output_frame_rate
-
-        self.output = Output(
-            PaperType.get(paper_type),
-            output_width,
-            output_height
-        )
-
-        self.n_flipbook_frames = None
-
-    def print_info(self):
-        print('\n\n----------------------------')
-        print(f'Input Video Info')
-        print('----------------------------')
-        self.input.print()
-        print('\n----------------------------')
-        print(f'Output Formatting Info')
-        print('----------------------------')
-        self.output.print_info()
-        print('----------------------------\n\n')
-
-    def create_output_dir(self):
-        output_dir_path = Path(self.output_dir)
-        if Path.exists(output_dir_path):
-            if output_dir_path.is_dir():
-                if os.listdir(self.output_dir):
-                    raise Exception((f'Output directory {self.output_dir} '
-                                     'already exists and is nonempty.'))
-                return True
-            raise Exception((f'Expected data output directory path {self.output_dir}'
-                             ' exists but is not a directory.'))
-        # If the data_dir does not exist, crate it
-        output_dir_path.mkdir()
-        return True
+    @property
+    def base_name(self) -> str:
+        # Base name for output files
+        return self.video_source.get_base_name()
 
     def extract_frames(self):
-        # Create a directory for the extracted frames
-        self.create_output_dir()
-
-        # extract the frames from the input video
-        frames = self.input.extract_frames(self.output_frame_rate)
-
-        self.n_flipbook_frames = len(frames)
-
-        return frames
-
-    def get_base_output_name(self):
         '''
-        Base file name is based on input file name
+        Extracts frames from the input video at the specified
+        output frame rate.
+        The extracted frames are stored in self.frames.
         '''
-        return Path(self.input.filename).stem
 
-    def get_output_name(self, page_no=None):
-        if page_no is None:
-            filename = f'{self.get_base_output_name()}.pdf'
-        else:
-            filename = f'{self.get_base_output_name()}.{str(page_no)}.pdf'
-        return Path(self.output_dir).joinpath(Path(filename))
+        # Input and output frame rates
+        fps_in = self.video_source.frame_rate
+        fps_out = self.flipbook_output.frame_rate
 
-    def write_page(self, frames, page_no):
-        # Get file name for batch
-        page_filename = self.get_output_name(page_no)
-        self.output.write_page(frames, page_filename, self.input.width, self.input.height)
+        # Open the file and open stream
+        cam = cv2.VideoCapture(self.video_source.filename)
+        if not cam.isOpened():
+            raise RuntimeError(f"Failed to open video file: {self.video_source.filename}")
 
-    def write_output_pdfs(self, frames):
-        # total number of images per page
-        num_per_page = self.output.get_frames_per_page()
+        frame_interval = fps_in / fps_out  # Interval between frames to extract
+        print(f"Extracting frames from {self.video_source.filename} at {fps_out} FPS")
 
-        # number of pages to write
-        num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
+        # Cycle through the frames
+        self.frames.clear()
+        n_flipbook_frames = 0
+        next_capture_frame = 0 # the next frame index to capture
 
-        for page_no in tqdm(
-                range(num_pages_to_print),
-                total=num_pages_to_print,
-                desc=f'Writing output to {self.output_dir}/'
-            ):
-            # Get subset of frames for the batch
-            frames_in_batch = frames[page_no * num_per_page: (page_no + 1) * num_per_page]
-            self.write_page(frames_in_batch, page_no)
+        for index_in in range(self.video_source.total_frames):
+            # Read the frame
+            success = cam.grab()
 
-        print()
-        return [self.get_output_name(page_no) for page_no in range(num_pages_to_print)]
+            if not success:
+                print(f"Frame {index_in} could not be retrieved. Stopping extraction.")
+                break
 
-    def combine_pdfs(self, output_frames):
-        output_file_name = self.get_output_name(None)
-        merger = PdfWriter()
-        for page in output_frames:
-            merger.append(page)
+            if index_in >= next_capture_frame:
+                success, data = cam.retrieve()
+                if not success:
+                    print(f"Frame {index_in} could not be retrieved. Stopping extraction.")
+                    break
+                # otherwise we process the frame
+                frame = Frame(data,
+                              n_flipbook_frames,
+                              self.video_source.width,
+                              self.video_source.height,
+                              self.flipbook_output.frame_output_width,
+                              self.flipbook_output.frame_output_height,
+                              self.flipbook_output.frame_border_padding,
+                              self.flipbook_output.frame_left_padding,
+                              self.flipbook_output.frame_border_line_width)
+                self.frames.append(frame)
+                n_flipbook_frames += 1
+                # The index of the next frame to capture based on output FPS
+                next_capture_frame += frame_interval
 
-        merger.write(output_file_name)
-        merger.close()
-        for page in output_frames:
-            os.remove(page)
-        print(f'\nWrote {output_file_name}\n\n')
+        self.video_source.total_frames = n_flipbook_frames
+        cam.release()
+        cv2.destroyAllWindows()
 
-    def write_output(self, frames):
-        output_frames = self.write_output_pdfs(frames)
-        self.combine_pdfs(output_frames)
+    def save(self, paper_type, dpi, output_dir):
+        '''
+        Saves the extracted frames into a flipbook-style PDF.
 
-    def run(self):
-        # Read the video and extract the frames
-        frames = self.extract_frames()
-        # Write the PDFs to output files
-        self.write_output(frames)
+        :param paper_type: The type of paper for printing.
+        :param dpi: The print resolution in dots per inch.
+        :param output_dir: The directory where the output should be saved.
+        '''
+        if not self.frames:
+            raise ValueError("No frames extracted. Run extract_frames() before saving.")
+
+        print(f"Saving flipbook to {output_dir} with paper type {paper_type} at {dpi} DPI.")
+
+        printer = FlipbookPrinter(
+            self.frames,
+            self.flipbook_output,
+            paper_type,
+            dpi,
+            output_dir,
+            self.base_name
+        )
+
+        printer.save()
+
+
+
+
+
+
+
 
