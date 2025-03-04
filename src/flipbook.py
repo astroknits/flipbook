@@ -50,7 +50,7 @@ class Flipbook:
 
         # Cycle through the frames
         self.frames.clear()
-        n_flipbook_frames = 0
+        cur_frame_no = 0
         next_capture_frame = 0 # the next frame index to capture
 
         for index_in in range(self.video_source.total_frames):
@@ -68,20 +68,15 @@ class Flipbook:
                     break
                 # otherwise we process the frame
                 frame = Frame(data,
-                              n_flipbook_frames,
-                              self.video_source.width,
-                              self.video_source.height,
-                              self.flipbook_output.frame_output_width,
-                              self.flipbook_output.frame_output_height,
-                              self.flipbook_output.frame_border_padding,
-                              self.flipbook_output.frame_left_padding,
-                              self.flipbook_output.frame_border_line_width)
+                              cur_frame_no,
+                              self.video_source,
+                              self.flipbook_output)
                 self.frames.append(frame)
-                n_flipbook_frames += 1
+                cur_frame_no += 1
                 # The index of the next frame to capture based on output FPS
                 next_capture_frame += frame_interval
 
-        self.video_source.total_frames = n_flipbook_frames
+        self.video_source.total_frames = cur_frame_no
         cam.release()
         cv2.destroyAllWindows()
 

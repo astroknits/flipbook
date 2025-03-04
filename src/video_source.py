@@ -59,6 +59,10 @@ class VideoSource:
                 f"Supported formats: {FlipbookConstants.Video.SUPPORTED_FORMATS}")
         return filename
 
+    @property
+    def aspect(self) -> float:
+        return float(self.height)/float(self.width)
+
     def get_base_name(self) -> str:
         '''
         Base file name is based on input file name

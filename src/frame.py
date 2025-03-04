@@ -4,118 +4,76 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 from src.flipbook_constants import FlipbookConstants
+from src.flipbook_output import FlipbookOutput
 from src.padding import EqualPadding, Padding
 from src.padding import LeftPadding
 from src.padding import ZeroPadding
 from src.padding import HorizontalPadding
 from src.padding import VerticalPadding
+from src.video_source import VideoSource
 
 
 class Frame:
     def __init__(self,
                  data: cv2.UMat,
                  frame_no: int,
-                 input_width: int,
-                 input_height: int,
-                 output_width: int,
-                 output_height: int,
-                 frame_border_padding: int,
-                 left_frame_padding: int,
-                 frame_border_line_width: int,
+                 video_source: VideoSource,
+                 flipbook_output: FlipbookOutput
                  ) -> None:
         '''
         Initializes a Frame object.
 
         :param data: The image frame data (from OpenCV).
         :param frame_no: The frame number in the sequence.
-        :param input_width: Original width of the frame.
-        :param input_height: Original height of the frame.
-        :param output_width: Desired width of the output frame.
-        :param output_height: Desired height of the output frame.
-        :param frame_border_padding: Padding around the frame.
-        :param left_frame_padding: Additional left padding.
-        :param frame_border_line_width: Border thickness.
-
+        :param video_source: Object for input video data
+        :param FlipbookOutput: Object for flipbook output params
         '''
         self.data = data
         self.frame_no = frame_no
-        self.input_width = input_width
-        self.input_height = input_height
-        self.input_aspect = input_height/input_width
-        self.output_width = output_width
-        self.output_height = output_height
-        self.frame_border_line_width = frame_border_line_width
-
-        # Adjust padding to avoid double application of border padding
-        adjusted_padding = max(0, frame_border_padding - self.frame_border_line_width)
-
-        # Compute frame padding
-        self.padding = self.get_frame_border_padding(adjusted_padding) +\
-                       self.get_left_frame_padding(left_frame_padding)
+        self.video_source = video_source
+        self.flipbook_output = flipbook_output
+        self.padding = self.flipbook_output.padding
 
         # Initialize canvas padding (to be updated later)
         self.canvas_padding = ZeroPadding()
-
-    def get_frame_border_padding(self, pad: int) -> Padding:
-        '''
-        Returns equal padding applied to all sides.
-        '''
-        return EqualPadding(pad)
-
-    def get_left_frame_padding(self, pad: int) -> Padding:
-        '''
-        Returns left padding to account for the flipbook binding
-        '''
-        return LeftPadding(pad)
-
-    def canvas_width(self) -> int:
-        '''
-        Returns the drawable canvas width, accounting for padding and border width.
-        '''
-        horiz_padding = self.padding.left + self.padding.right + 2 * self.frame_border_line_width
-        return self.output_width - horiz_padding
-
-    def canvas_height(self) -> int:
-        '''
-        Returns the drawable canvas height, accounting for padding and border width.
-        '''
-        vert_padding = self.padding.top + self.padding.bottom + 2 * self.frame_border_line_width
-        return self.output_height - vert_padding
-
-    def canvas_aspect(self) -> float:
-        '''
-        Returns the aspect ratio of the canvas area
-        '''
-        return self.canvas_height()/self.canvas_width()
 
     def get_frame(self) -> Image.Image:
         '''
         Generates and returns a frame with correct padding, aspect ratio adjustments, and watermark.
         '''
-        frame = Image.new('RGB', (self.output_width, self.output_height), 'white')
+        input_aspect = self.video_source.aspect
 
-        # Convert OpenCV image (BGR) to PIL Image (RGB)
-        img = cv2.cvtColor(self.data, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(img.astype('uint8'), 'RGB')
+        canvas_width = self.flipbook_output.canvas_width
+        canvas_height = self.flipbook_output.canvas_height
+        canvas_aspect = self.flipbook_output.canvas_aspect
 
         # resize based on output size
         # Check which dimension to fit to the canvas
-        if self.input_aspect > self.canvas_aspect():
+        if input_aspect > canvas_aspect:
             # rel input_height >= rel canvas_height
             # input frame aspect ratio is taller than canvas
             # fit to canvas height
-            resize_height = self.canvas_height()
-            resize_width = int(resize_height / self.input_aspect)
-            pad = self.canvas_width() - resize_width
+            resize_height = canvas_height
+            resize_width = int(resize_height / input_aspect)
+            pad = canvas_width - resize_width
             self.canvas_padding = HorizontalPadding(pad)
         else:
             # rel input_height < rel canvas_height
             # input frame aspect ratio is shorter than canvas
             # fit to canvas width
-            resize_width = self.canvas_width()
-            resize_height = int(resize_width * self.input_aspect)
-            pad = self.canvas_height() - resize_height
+            resize_width = canvas_width
+            resize_height = int(resize_width * input_aspect)
+            pad = canvas_height - resize_height
             self.canvas_padding = VerticalPadding(pad)
+
+        output_width = self.flipbook_output.frame_output_width
+        output_height = self.flipbook_output.frame_output_height
+
+        frame = Image.new('RGB', (output_width, output_height), 'white')
+
+        # Convert OpenCV image (BGR) to PIL Image (RGB)
+        img = cv2.cvtColor(self.data, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(img.astype('uint8'), 'RGB')
 
         img = img.resize((resize_width, resize_height))
 
@@ -126,7 +84,7 @@ class Frame:
         frame.paste(img, (padding.left, padding.bottom))
 
         # Add thin border
-        frame = ImageOps.expand(frame, border=self.frame_border_line_width, fill='black')
+        frame = ImageOps.expand(frame, border=self.flipbook_output.frame_border_line_width, fill='black')
 
         # Add watermark to the frame
         self.add_watermark_to_img(frame)
@@ -154,7 +112,7 @@ class Frame:
         # Position at bottom left-hand corner of the image
         # Add left padding to match the bottom padding
         x_pos = self.padding.bottom
-        y_pos = self.output_height - (self.padding.bottom + text_height)
+        y_pos = self.flipbook_output.frame_output_height - (self.padding.bottom + text_height)
         position = (x_pos, y_pos)
 
         # Draw the watermark
