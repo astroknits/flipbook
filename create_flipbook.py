@@ -27,9 +27,9 @@ def main():
         args.output_frame_rate,
         output_width,
         output_height,
-        frame_border_padding=50,
-        frame_left_padding=260,
-        frame_border_line_width=3
+        border_padding=50,
+        left_padding=260,
+        border_line_width=3
     )
 
     # Instantiate flipbook object

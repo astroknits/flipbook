@@ -49,9 +49,9 @@ class FlipbookPrinter:
 
         # Compute the number of rows and columns that fit on a page
         self.nrows = int(self.paper_type.format.height //
-                         self.flipbook_output.frame_output_height)
+                         self.flipbook_output.height)
         self.ncols = int(self.paper_type.format.width //
-                         self.flipbook_output.frame_output_width)
+                         self.flipbook_output.width)
         self.num_per_page = self.nrows * self.ncols
 
         # Calculate the total number of pages required
@@ -96,8 +96,8 @@ class FlipbookPrinter:
         row = rel_frame_no // self.ncols
         col = rel_frame_no % self.ncols
 
-        offset_width = self.flipbook_output.frame_output_width * col
-        offset_height = self.flipbook_output.frame_output_height * row
+        offset_width = self.flipbook_output.width * col
+        offset_height = self.flipbook_output.height * row
 
         return offset_width, offset_height
 

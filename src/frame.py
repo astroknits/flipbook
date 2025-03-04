@@ -7,6 +7,7 @@ from PIL import ImageFont
 
 from src.flipbook_constants import FlipbookConstants
 from src.flipbook_output import FlipbookOutput
+from src.padding import HorizontalPadding, VerticalPadding
 from src.video_source import VideoSource
 
 
@@ -36,22 +37,24 @@ class Frame:
 
     @property
     def output_width(self):
-        return self.flipbook_output.frame_output_width
+        return self.flipbook_output.width
 
     @property
     def output_height(self):
-        return self.flipbook_output.frame_output_height
+        return self.flipbook_output.height
 
     @property
     def frame_border_line_width(self):
-        return self.flipbook_output.frame_border_line_width
+        return self.flipbook_output.border_line_width
 
     def get_frame(self) -> Image.Image:
         '''
         Generates and returns a frame with correct padding, aspect ratio adjustments, and watermark.
         '''
-        resize_res = self.flipbook_output.get_resize_res(self.input_aspect)
-        padding = self.flipbook_output.get_padding(self.input_aspect)
+        canvas = Canvas(self.input_aspect, self.flipbook_output)
+
+        resize_res = canvas.resize_res
+        padding = self.flipbook_output.padding + canvas.padding
 
         frame = Image.new('RGB', (self.output_width, self.output_height), 'white')
 
@@ -71,7 +74,7 @@ class Frame:
         # Position at bottom left-hand corner of the image
         # Add left padding to match the bottom padding
         x_pos = padding.bottom
-        y_pos = self.flipbook_output.frame_output_height - padding.bottom
+        y_pos = self.flipbook_output.height - padding.bottom
 
         self.add_watermark_to_img(frame, (x_pos, y_pos))
         return frame
@@ -102,3 +105,52 @@ class Frame:
         draw.text(position, watermark_text, font=font, fill='black')
 
 
+class Canvas:
+    def __init__(self,
+                 input_aspect: float,
+                 flipbook_output: FlipbookOutput):
+        self.input_aspect = input_aspect
+        self.flipbook_output = flipbook_output
+        self.__set_resize_info()
+
+    @property
+    def width(self):
+        return self.flipbook_output.canvas_width
+
+    @property
+    def height(self):
+        return self.flipbook_output.canvas_height
+
+    @property
+    def aspect(self) -> float:
+        '''
+        Returns the aspect ratio of the canvas area
+        '''
+        return float(self.height) / float(self.width)
+
+    @property
+    def fit_to_height(self) -> bool:
+        # Determine whether input height is greater than canvas height
+        return self.input_aspect > self.aspect
+
+    @property
+    def resize_res(self):
+        return self.resize_width, self.resize_height
+
+    def __set_resize_info(self) -> None:
+        # resize based on output size
+        # Check which dimension to fit to the canvas
+        if self.fit_to_height:
+            # rel input_height >= rel canvas_height
+            # input frame aspect ratio is taller than canvas
+            # fit to canvas height
+            self.resize_height = self.height
+            self.resize_width = int(self.resize_height / self.input_aspect)
+            self.padding = HorizontalPadding(self.width - self.resize_width)
+        else:
+            # rel input_height < rel canvas_height
+            # input frame aspect ratio is shorter than canvas
+            # fit to canvas width
+            self.resize_width = self.width
+            self.resize_height = int(self.resize_width * self.input_aspect)
+            self.padding = VerticalPadding(self.height - self.resize_height)
