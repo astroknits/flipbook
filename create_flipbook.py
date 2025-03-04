@@ -1,3 +1,5 @@
+from src.video_source import VideoSource
+from src.flipbook_output import FlipbookOutput
 from src.paper_type import PaperType
 from src.parse_args import parse_args
 from src.flipbook import Flipbook
@@ -17,13 +19,21 @@ def main():
     output_width = int(args.width * args.dpi)
     output_height = int(args.height * args.dpi)
 
-    # Instantiate flipbook object
-    flipbook = Flipbook(
-        args.filename,
+    # instantiate Input object with input video path and metadata
+    flipbook_input = VideoSource(args.filename)
+
+    # instantiate Output object with output frame parameters
+    flipbook_output = FlipbookOutput(
         args.output_frame_rate,
         output_width,
         output_height,
+        frame_border_padding=50,
+        frame_left_padding=260,
+        frame_border_line_width=3
     )
+
+    # Instantiate flipbook object
+    flipbook = Flipbook(flipbook_input, flipbook_output)
 
     # Run the flipbook to extract the frames
     flipbook.extract_frames()

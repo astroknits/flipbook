@@ -1,5 +1,5 @@
 
-class Output:
+class FlipbookOutput:
     def __init__(self,
                  output_fps,
                  frame_output_width,

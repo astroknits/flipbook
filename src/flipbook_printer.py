@@ -9,14 +9,14 @@ from pypdf import PdfWriter
 from tqdm import tqdm
 
 from src.frame import Frame
-from src.output import Output
+from src.flipbook_output import FlipbookOutput
 from src.paper_type import PaperType
 
 
 class FlipbookPrinter:
     def __init__(self,
                  frames: List[Frame],
-                 output: Output,
+                 flipbook_output: FlipbookOutput,
                  paper_type: str,
                  dpi: int,
                  output_dir: str,
@@ -26,7 +26,7 @@ class FlipbookPrinter:
         Initializes the FlipbookPrinter.
 
         :param frames: List of Frame objects to be printed
-        :param output: Output configuration
+        :param flipbook_output: Flipbook output configuration
         :param paper_type: Type of paper used
         :param dpi: Dots per inch for printing
         :param output_dir: Directory to store output PDFs
@@ -37,7 +37,7 @@ class FlipbookPrinter:
         self.frames = frames
 
         # output parameters
-        self.output = output
+        self.flipbook_output = flipbook_output
         # paper parameters
         self.paper_type = PaperType.get(paper_type)
         # dots per inch for printing
@@ -49,9 +49,9 @@ class FlipbookPrinter:
 
         # Compute the number of rows and columns that fit on a page
         self.nrows = int(self.paper_type.format.height //
-                         self.output.frame_output_height)
+                         self.flipbook_output.frame_output_height)
         self.ncols = int(self.paper_type.format.width //
-                         self.output.frame_output_width)
+                         self.flipbook_output.frame_output_width)
         self.num_per_page = self.nrows * self.ncols
 
         # Calculate the total number of pages required
@@ -96,8 +96,8 @@ class FlipbookPrinter:
         row = rel_frame_no // self.ncols
         col = rel_frame_no % self.ncols
 
-        offset_width = self.output.frame_output_width * col
-        offset_height = self.output.frame_output_height * row
+        offset_width = self.flipbook_output.frame_output_width * col
+        offset_height = self.flipbook_output.frame_output_height * row
 
         return offset_width, offset_height
 
