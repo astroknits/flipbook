@@ -1,138 +1,89 @@
-import os
-from pathlib import Path
-from math import ceil
-from tqdm import tqdm
-from pypdf import PdfWriter
 
+import cv2
+
+from src.frame import Frame
 from src.input import Input
 from src.output import Output
-from src.paper_type import PaperType
-
+from src.flipbook_printer import FlipbookPrinter
 
 class Flipbook:
-    '''
-    Class to create frames for flipbook from video file
-    '''
-
-    def __init__(
-            self,
-            input_filename,
-            output_dir,
-            output_width=5,
-            output_height=3,
-            output_frame_rate=0,
-            paper_type='letter',
-             ):
-
-        # output_width, output_height in inches
-
-        # output directory for output for flipbook
-        self.output_dir = output_dir
-
-        self.input = Input(input_filename)
-
-        self.output_frame_rate = output_frame_rate
-
-        self.output = Output(
-            PaperType.get(paper_type),
-            output_width,
-            output_height
-        )
-
+    def __init__(self,
+                 input_file,
+                 output_fps,
+                 output_width,
+                 output_height,
+                 frame_border_padding=50,
+                 frame_left_padding=260):
+        self.input = Input(input_file)
+        self.base_name = self.input.get_base_name()
+        self.output = Output(output_fps, output_width, output_height, frame_border_padding, frame_left_padding)
         self.n_flipbook_frames = None
-
-    def print_info(self):
-        print('\n\n----------------------------')
-        print(f'Input Video Info')
-        print('----------------------------')
-        self.input.print()
-        print('\n----------------------------')
-        print(f'Output Formatting Info')
-        print('----------------------------')
-        self.output.print_info()
-        print('----------------------------\n\n')
-
-    def create_output_dir(self):
-        output_dir_path = Path(self.output_dir)
-        if Path.exists(output_dir_path):
-            if output_dir_path.is_dir():
-                if os.listdir(self.output_dir):
-                    raise Exception((f'Output directory {self.output_dir} '
-                                     'already exists and is nonempty.'))
-                return True
-            raise Exception((f'Expected data output directory path {self.output_dir}'
-                             ' exists but is not a directory.'))
-        # If the data_dir does not exist, crate it
-        output_dir_path.mkdir()
-        return True
+        self.frames = None
 
     def extract_frames(self):
-        # Create a directory for the extracted frames
-        self.create_output_dir()
-
-        # extract the frames from the input video
-        frames = self.input.extract_frames(self.output_frame_rate)
-
-        self.n_flipbook_frames = len(frames)
-
-        return frames
-
-    def get_base_output_name(self):
         '''
-        Base file name is based on input file name
+        Step through the input video frames and extract
+        at the desired output frame rate, saving as
+        self.frames
         '''
-        return Path(self.input.filename).stem
 
-    def get_output_name(self, page_no=None):
-        if page_no is None:
-            filename = f'{self.get_base_output_name()}.pdf'
-        else:
-            filename = f'{self.get_base_output_name()}.{str(page_no)}.pdf'
-        return Path(self.output_dir).joinpath(Path(filename))
+        # Input and output frame rates
+        fps_in = self.input.frame_rate
+        fps_out = self.output.frame_rate
 
-    def write_page(self, frames, page_no):
-        # Get file name for batch
-        page_filename = self.get_output_name(page_no)
-        self.output.write_page(frames, page_filename, self.input.width, self.input.height)
+        # Open the file and open stream
+        cam = cv2.VideoCapture(self.input.filename)
 
-    def write_output_pdfs(self, frames):
-        # total number of images per page
-        num_per_page = self.output.get_frames_per_page()
+        # Cycle through the frames
+        self.n_flipbook_frames = 0
+        self.frames = []
+        for index_in in range(self.input.total_frames):
+            # Read the frame
+            success, data = cam.read()
 
-        # number of pages to write
-        num_pages_to_print = ceil(self.n_flipbook_frames/num_per_page)
+            if not success:
+                # Before breaking, update with the accurate number of frames
+                self.input.total_frames = index_in
+                break
 
-        for page_no in tqdm(
-                range(num_pages_to_print),
-                total=num_pages_to_print,
-                desc=f'Writing output to {self.output_dir}/'
-            ):
-            # Get subset of frames for the batch
-            frames_in_batch = frames[page_no * num_per_page: (page_no + 1) * num_per_page]
-            self.write_page(frames_in_batch, page_no)
+            # otherwise we process the frame
+            out_due = int(index_in / fps_in * fps_out)
+            if out_due > self.n_flipbook_frames:
+                success, data = cam.retrieve()
+                if not success:
+                    # Before breaking, update with the accurate number of frames
+                    self.total_frames = index_in
+                    break
+                # otherwise we process the frame
+                frame = Frame(data,
+                              self.n_flipbook_frames,
+                              self.input.width,
+                              self.input.height,
+                              self.output.frame_output_width,
+                              self.output.frame_output_height,
+                              self.output.frame_border_padding,
+                              self.output.frame_left_padding)
+                self.frames.append(frame)
+                self.n_flipbook_frames += 1
 
-        print()
-        return [self.get_output_name(page_no) for page_no in range(num_pages_to_print)]
+        cam.release()
+        cv2.destroyAllWindows()
 
-    def combine_pdfs(self, output_frames):
-        output_file_name = self.get_output_name(None)
-        merger = PdfWriter()
-        for page in output_frames:
-            merger.append(page)
+    def save(self, paper_type, dpi, output_dir):
+        printer = FlipbookPrinter(
+            self.frames,
+            self.output,
+            paper_type,
+            dpi,
+            output_dir,
+            self.base_name
+        )
 
-        merger.write(output_file_name)
-        merger.close()
-        for page in output_frames:
-            os.remove(page)
-        print(f'\nWrote {output_file_name}\n\n')
+        printer.save()
 
-    def write_output(self, frames):
-        output_frames = self.write_output_pdfs(frames)
-        self.combine_pdfs(output_frames)
 
-    def run(self):
-        # Read the video and extract the frames
-        frames = self.extract_frames()
-        # Write the PDFs to output files
-        self.write_output(frames)
+
+
+
+
 

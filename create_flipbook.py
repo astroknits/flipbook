@@ -1,3 +1,4 @@
+from src.paper_type import PaperType
 from src.parse_args import parse_args
 from src.flipbook import Flipbook
 
@@ -13,24 +14,22 @@ def main():
     # Parse command line arguments
     args = parse_args()
 
-    output_width, output_height = get_dimensions(args.output_size)
+    output_width = int(args.width * args.dpi)
+    output_height = int(args.height * args.dpi)
 
     # Instantiate flipbook object
     flipbook = Flipbook(
         args.filename,
-        args.output_dir,
-        output_frame_rate=args.output_frame_rate,
-        output_width=output_width,
-        output_height=output_height,
-        paper_type=args.paper_type
+        args.output_frame_rate,
+        output_width,
+        output_height,
     )
 
-    # Print the info
-    flipbook.print_info()
+    # Run the flipbook to extract the frames
+    flipbook.extract_frames()
 
-    # Create the flipbook
-    flipbook.run()
-
+    # Save the frames to disk
+    flipbook.save(args.paper_type, args.dpi, args.output_dir)
 
 if __name__ == '__main__':
     main()
