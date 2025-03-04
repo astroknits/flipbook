@@ -27,10 +27,26 @@ class Flipbook:
         :param frame_left_padding: Left padding for frames (default: 260)
         :param frame_border_line_width: border line width for frames (default: 3)
         '''
+        # instantiate Input object with input video path and metadata
         self.input = Input(input_file)
-        self.base_name = self.input.get_base_name()
-        self.output = Output(output_fps, output_width, output_height, frame_border_padding, frame_left_padding, frame_border_line_width)
+
+        # instantiate Output object with output frame parameters
+        self.output = Output(
+            output_fps,
+            output_width,
+            output_height,
+            frame_border_padding,
+            frame_left_padding,
+            frame_border_line_width
+        )
+
+        # Initialize self.frames (to be updated later)
         self.frames: List[Frame] = []
+
+    @property
+    def base_name(self) -> str:
+        # Base name for output files
+        return self.input.get_base_name()
 
     def extract_frames(self):
         '''
@@ -81,7 +97,8 @@ class Flipbook:
                               self.output.frame_border_line_width)
                 self.frames.append(frame)
                 n_flipbook_frames += 1
-                next_capture_frame += frame_interval # Schedule the next frame to capture
+                # The index of the next frame to capture based on output FPS
+                next_capture_frame += frame_interval
 
         self.input.total_frames = n_flipbook_frames
         cam.release()
@@ -110,6 +127,7 @@ class Flipbook:
         )
 
         printer.save()
+
 
 
 
