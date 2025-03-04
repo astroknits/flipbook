@@ -1,21 +1,37 @@
 import os
+
 from math import ceil
 from pathlib import Path
+from typing import Optional, List, Tuple
+
 from PIL import Image
 from pypdf import PdfWriter
 from tqdm import tqdm
+
+from src.frame import Frame
+from src.output import Output
 from src.paper_type import PaperType
 
 
 class FlipbookPrinter:
     def __init__(self,
-                 frames,
-                 output,
-                 paper_type,
-                 dpi,
-                 output_dir,
-                 base_name
+                 frames: List[Frame],
+                 output: Output,
+                 paper_type: str,
+                 dpi: int,
+                 output_dir: str,
+                 base_name: str
                  ):
+        '''
+        Initializes the FlipbookPrinter.
+
+        :param frames: List of Frame objects to be printed
+        :param output: Output configuration
+        :param paper_type: Type of paper used
+        :param dpi: Dots per inch for printing
+        :param output_dir: Directory to store output PDFs
+        :param base_name: Base name for output files
+        '''
 
         # full list of frames
         self.frames = frames
@@ -31,42 +47,51 @@ class FlipbookPrinter:
         self.output_dir = output_dir
         self.base_name = base_name
 
-        self.nrows = int(self.paper_type.value.height // self.output.frame_output_height)
-        self.ncols = int(self.paper_type.value.width // self.output.frame_output_width)
+        # Compute the number of rows and columns that fit on a page
+        self.nrows = int(self.paper_type.format.height //
+                         self.output.frame_output_height)
+        self.ncols = int(self.paper_type.format.width //
+                         self.output.frame_output_width)
         self.num_per_page = self.nrows * self.ncols
 
-        # number of pages to write
-        self.num_pages_to_print = ceil(len(self.frames)/self.num_per_page)
+        # Calculate the total number of pages required
+        self.num_pages_to_print = ceil(len(self.frames) / self.num_per_page)
 
-    def save(self):
+    def save(self) -> None:
+        """Generates and saves the flipbook PDF."""
         self.__create_output_dir()
         self.__write_pages()
         self.__combine_pdfs()
 
-    def __create_output_dir(self):
+    def __create_output_dir(self) -> None:
+        """Ensures that the output directory exists and is empty."""
         output_dir_path = Path(self.output_dir)
         if Path.exists(output_dir_path):
             if output_dir_path.is_dir():
                 if os.listdir(self.output_dir):
                     raise Exception((f'Output directory {self.output_dir} '
                                      'already exists and is nonempty.'))
-                return True
+                return
             raise Exception((f'Expected data output directory path {self.output_dir}'
                              ' exists but is not a directory.'))
         # If the data_dir does not exist, crate it
         output_dir_path.mkdir()
-        return True
+        return
 
-    def get_output_name(self, page_no=None):
+    def get_output_name(self, page_no: Optional[int] = None) -> Path:
+        '''
+        Returns the filename for a given page number,
+        or the final PDF if no page number is given.
+        '''
         if page_no is None:
             filename = f'{self.base_name}.pdf'
         else:
             filename = f'{self.base_name}.{str(page_no)}.pdf'
         return Path(self.output_dir).joinpath(Path(filename))
 
-    def __get_offset(self, frame_no):
-        # Get the offset on which to paste the whole frame on the page including padding
-        rel_frame_no = frame_no % (self.nrows * self.ncols)
+    def __get_offset(self, frame_no: int) -> Tuple[int, int]:
+        '''Computes the offset position for a frame on the page.'''
+        rel_frame_no = frame_no % self.num_per_page
 
         row = rel_frame_no // self.ncols
         col = rel_frame_no % self.ncols
@@ -76,10 +101,11 @@ class FlipbookPrinter:
 
         return offset_width, offset_height
 
-    def __write_page(self, frames: object, frame_no: object) -> object:
+    def __write_page(self, frames: List[Frame], frame_no: int) -> None:
+        '''Generates and saves an individual page with the given frames.'''
         page_filename = self.get_output_name(frame_no)
         page = Image.new('RGB',
-                         (self.paper_type.value.width, self.paper_type.value.height),
+                         (self.paper_type.format.width, self.paper_type.format.height),
                          'white')
 
         for frame in frames:
@@ -96,12 +122,13 @@ class FlipbookPrinter:
 
         page.save(page_filename)
 
-    def __write_pages(self):
+    def __write_pages(self) -> None:
+        '''
+        Writes all pages containing the flipbook frames.
+        '''
         for page_no in tqdm(
                 range(self.num_pages_to_print),
-                total=self.num_pages_to_print,
-                desc=f'Writing output to {self.output_dir}/'
-            ):
+                total=self.num_pages_to_print):
             # Get subset of frames for the batch
             start_frame = page_no * self.num_per_page
             end_frame = (page_no + 1) * self.num_per_page - 1
@@ -111,7 +138,11 @@ class FlipbookPrinter:
 
         print()
 
-    def __combine_pdfs(self):
+    def __combine_pdfs(self) -> None:
+        '''
+        Combines all individual pages into a single PDF
+        and cleans up temporary files.
+        '''
         output_frames = [self.get_output_name(page_no) for page_no in range(self.num_pages_to_print)]
         output_file_name = self.get_output_name(None)
         merger = PdfWriter()

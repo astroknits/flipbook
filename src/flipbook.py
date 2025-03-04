@@ -1,3 +1,4 @@
+from typing import List
 
 import cv2
 
@@ -8,23 +9,34 @@ from src.flipbook_printer import FlipbookPrinter
 
 class Flipbook:
     def __init__(self,
-                 input_file,
-                 output_fps,
-                 output_width,
-                 output_height,
-                 frame_border_padding=50,
-                 frame_left_padding=260):
+                 input_file: str,
+                 output_fps: int,
+                 output_width: int,
+                 output_height: int,
+                 frame_border_padding: int = 50,
+                 frame_left_padding: int = 260,
+                 frame_border_line_width: int = 3) -> None:
+        '''
+        Initializes the Flipbook object.
+
+        :param input_file: Path to the input video file.
+        :param output_fps: Frames per second for the output.
+        :param output_width: Width of each output frame.
+        :param output_height: Height of each output frame.
+        :param frame_border_padding: Padding around frames (default: 50).
+        :param frame_left_padding: Left padding for frames (default: 260)
+        :param frame_border_line_width: border line width for frames (default: 3)
+        '''
         self.input = Input(input_file)
         self.base_name = self.input.get_base_name()
-        self.output = Output(output_fps, output_width, output_height, frame_border_padding, frame_left_padding)
-        self.n_flipbook_frames = None
-        self.frames = None
+        self.output = Output(output_fps, output_width, output_height, frame_border_padding, frame_left_padding, frame_border_line_width)
+        self.frames: List[Frame] = []
 
     def extract_frames(self):
         '''
-        Step through the input video frames and extract
-        at the desired output frame rate, saving as
-        self.frames
+        Extracts frames from the input video at the specified
+        output frame rate.
+        The extracted frames are stored in self.frames.
         '''
 
         # Input and output frame rates
@@ -33,43 +45,61 @@ class Flipbook:
 
         # Open the file and open stream
         cam = cv2.VideoCapture(self.input.filename)
+        if not cam.isOpened():
+            raise RuntimeError(f"Failed to open video file: {self.input.filename}")
+
+        frame_interval = fps_in / fps_out  # Interval between frames to extract
+        print(f"Extracting frames from {self.input.filename} at {fps_out} FPS")
 
         # Cycle through the frames
-        self.n_flipbook_frames = 0
-        self.frames = []
+        self.frames.clear()
+        n_flipbook_frames = 0
+        next_capture_frame = 0 # the next frame index to capture
+
         for index_in in range(self.input.total_frames):
             # Read the frame
-            success, data = cam.read()
+            success = cam.grab()
 
             if not success:
-                # Before breaking, update with the accurate number of frames
-                self.input.total_frames = index_in
+                print(f"Frame {index_in} could not be retrieved. Stopping extraction.")
                 break
 
-            # otherwise we process the frame
-            out_due = int(index_in / fps_in * fps_out)
-            if out_due > self.n_flipbook_frames:
+            if index_in >= next_capture_frame:
                 success, data = cam.retrieve()
                 if not success:
-                    # Before breaking, update with the accurate number of frames
-                    self.total_frames = index_in
+                    print(f"Frame {index_in} could not be retrieved. Stopping extraction.")
                     break
                 # otherwise we process the frame
                 frame = Frame(data,
-                              self.n_flipbook_frames,
+                              n_flipbook_frames,
                               self.input.width,
                               self.input.height,
                               self.output.frame_output_width,
                               self.output.frame_output_height,
                               self.output.frame_border_padding,
-                              self.output.frame_left_padding)
+                              self.output.frame_left_padding,
+                              self.output.frame_border_line_width)
                 self.frames.append(frame)
-                self.n_flipbook_frames += 1
+                n_flipbook_frames += 1
+                next_capture_frame += frame_interval # Schedule the next frame to capture
 
+        self.input.total_frames = n_flipbook_frames
         cam.release()
         cv2.destroyAllWindows()
 
     def save(self, paper_type, dpi, output_dir):
+        '''
+        Saves the extracted frames into a flipbook-style PDF.
+
+        :param paper_type: The type of paper for printing.
+        :param dpi: The print resolution in dots per inch.
+        :param output_dir: The directory where the output should be saved.
+        '''
+        if not self.frames:
+            raise ValueError("No frames extracted. Run extract_frames() before saving.")
+
+        print(f"Saving flipbook to {output_dir} with paper type {paper_type} at {dpi} DPI.")
+
         printer = FlipbookPrinter(
             self.frames,
             self.output,
