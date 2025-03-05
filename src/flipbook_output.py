@@ -51,7 +51,7 @@ class FlipbookOutput:
         return EqualPadding(adjusted_padding) + LeftPadding(self.left_padding)
 
     @property
-    def canvas_size(self) -> Resolution:
+    def canvas_res(self) -> Resolution:
         '''
         Returns the drawable canvas width, accounting for padding and border width.
         '''
