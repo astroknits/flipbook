@@ -3,6 +3,7 @@ from typing import List
 import cv2
 
 from src.frame import Frame
+from src.paper_type import PaperType
 from src.video_source import VideoSource
 from src.flipbook_output import FlipbookOutput
 from src.flipbook_printer import FlipbookPrinter
@@ -29,7 +30,7 @@ class Flipbook:
         # Base name for output files
         return self.video_source.get_base_name()
 
-    def extract_frames(self):
+    def extract_frames(self) -> None:
         '''
         Extracts frames from the input video at the specified
         output frame rate.
@@ -80,7 +81,10 @@ class Flipbook:
         cam.release()
         cv2.destroyAllWindows()
 
-    def save(self, paper_type, dpi, output_dir):
+    def save(self,
+             paper_type: str,
+             dpi: int,
+             output_dir: str) -> None:
         '''
         Saves the extracted frames into a flipbook-style PDF.
 

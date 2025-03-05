@@ -52,6 +52,8 @@ class Frame:
         '''
         Generates and returns a frame with correct padding, aspect ratio adjustments, and watermark.
         '''
+        # TODO: extract canvas and pass it in as an arg to the
+        #       class instead of VideoSource
         canvas = Canvas(self.input_aspect, self.flipbook_output)
 
         padding = self.flipbook_output.padding + canvas.padding
