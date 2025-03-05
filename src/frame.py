@@ -54,7 +54,7 @@ class Frame:
         '''
         # TODO: extract canvas and pass it in as an arg to the
         #       class instead of VideoSource
-        canvas = Canvas(self.input_aspect, self.flipbook_output)
+        canvas = Canvas(self.input_aspect, self.flipbook_output.canvas_res)
 
         padding = self.flipbook_output.padding + canvas.padding
 
