@@ -54,7 +54,6 @@ class Frame:
         '''
         canvas = Canvas(self.input_aspect, self.flipbook_output)
 
-        resize_res = canvas.resize_res
         padding = self.flipbook_output.padding + canvas.padding
 
         frame = Image.new('RGB', (self.output_width, self.output_height), 'white')
@@ -62,7 +61,7 @@ class Frame:
         # Convert OpenCV image (BGR) to PIL Image (RGB)
         img = cv2.cvtColor(self.data, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img.astype('uint8'), 'RGB')
-        img = img.resize(resize_res)
+        img = img.resize(canvas.resize_size.tuple)
 
         # Paste the image based on left, bottom padding
         frame.paste(img, (padding.left, padding.bottom))
