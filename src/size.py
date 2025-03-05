@@ -13,3 +13,7 @@ class Size:
     def tuple(self):
         return self.width, self.height
 
+    @property
+    def aspect(self):
+        return float(self.height) / float(self.width)
+

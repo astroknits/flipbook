@@ -1,4 +1,5 @@
 from src.padding import EqualPadding, LeftPadding
+from src.size import Size
 
 
 class FlipbookOutput:
@@ -38,20 +39,15 @@ class FlipbookOutput:
         return EqualPadding(adjusted_padding) + LeftPadding(self.left_padding)
 
     @property
-    def canvas_width(self) -> int:
+    def canvas_size(self) -> int:
         '''
         Returns the drawable canvas width, accounting for padding and border width.
         '''
         horiz_padding = self.padding.left + self.padding.right + 2 * self.border_line_width
-        return self.width - horiz_padding
-
-    @property
-    def canvas_height(self) -> int:
-        '''
-        Returns the drawable canvas height, accounting for padding and border width.
-        '''
+        width = self.width - horiz_padding
         vert_padding = self.padding.top + self.padding.bottom + 2 * self.border_line_width
-        return self.height - vert_padding
+        height = self.height - vert_padding
+        return Size(width, height)
 
     def print_info(self):
         print(f'Flipbook frame size: {self.width}x{self.height}')
