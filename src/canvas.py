@@ -1,7 +1,8 @@
 
 from src.flipbook_output import FlipbookOutput
+from src.padding import Padding
 from src.resizer import Resizer
-from src.size import Size
+from src.resolution import Resolution
 
 class Canvas:
     def __init__(self,
@@ -9,16 +10,16 @@ class Canvas:
                  flipbook_output: FlipbookOutput
                  ):
         self.flipbook_output = flipbook_output
-        self.resizer = Resizer(input_aspect, self.size)
+        self.resizer = Resizer(input_aspect, self.res)
 
     @property
-    def size(self) -> Size:
+    def res(self) -> Resolution:
         return self.flipbook_output.canvas_size
 
     @property
-    def resize_size(self) -> Size:
-        return self.resizer.resize_size
+    def resize_res(self) -> Resolution:
+        return self.resizer.resize_res
 
     @property
-    def padding(self):
+    def padding(self) -> Padding:
         return self.resizer.padding

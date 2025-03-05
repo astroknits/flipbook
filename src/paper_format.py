@@ -1,4 +1,5 @@
-
+from src.size import Size
+from src.resolution import Resolution
 
 class PaperFormat:
     '''
@@ -11,12 +12,18 @@ class PaperFormat:
                  height: float,
                  dpi: int = 300):
         self.name = name
-        self.width_inches = width
-        self.height_inches = height
-        self.width = int(width * dpi)
-        self.height = int(height * dpi)
+        self.size = Size(width, height)
+        self.res = self.size.get_resolution(dpi)
         self.dpi = dpi
 
     @property
     def aspect(self) -> float:
-        return self.height_inches / self.width_inches
+        return self.res.aspect
+
+    @property
+    def width(self):
+        return self.res.width
+
+    @property
+    def height(self):
+        return self.res.height

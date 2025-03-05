@@ -61,7 +61,7 @@ class Frame:
         # Convert OpenCV image (BGR) to PIL Image (RGB)
         img = cv2.cvtColor(self.data, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img.astype('uint8'), 'RGB')
-        img = img.resize(canvas.resize_size.tuple)
+        img = img.resize(canvas.resize_res.tuple)
 
         # Paste the image based on left, bottom padding
         frame.paste(img, (padding.left, padding.bottom))
