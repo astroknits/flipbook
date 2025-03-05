@@ -6,18 +6,22 @@ from src.size import Size
 class FlipbookOutput:
     def __init__(self,
                  output_fps: float,
-                 width: int,
-                 height: int,
+                 width: float,
+                 height: float,
                  border_padding: int,
                  left_padding: int,
-                 border_line_width: int
+                 border_line_width: int,
+                 dpi: int
                  ):
 
         # output frame rate
         self.frame_rate = output_fps
 
-        # frame width in pixels
-        self.res = Size(width, height)
+        # frame size in inches
+        self.size = Size(width, height)
+
+        # frame resolution in pixels
+        self.res = self.size.get_resolution(dpi)
 
         # padding around the frame
         self.border_padding = border_padding
@@ -27,6 +31,8 @@ class FlipbookOutput:
 
         # width of border to draw around the frame
         self.border_line_width = border_line_width
+
+        self.dpi = dpi
 
     @property
     def width(self):
