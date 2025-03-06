@@ -69,16 +69,18 @@ class Flipbook:
 
     def video_frame_source(self, cam):
         """
-        Generator that yields raw video frames from an OpenCV capture object.
+        Extract raw video frames from an OpenCV capture object.
 
         :param cam: The cv2.VideoCapture object.
-        :yield: Raw frame data.
+        :return: list of raw frame data.
         """
+        frame_data = []
         for index_in in range(self.video_source.total_frames):
             data = self.capture_frame(cam, index_in)
             if data is None:
                 break
-            yield data
+            frame_data.append(data)
+        return frame_data
 
     def process_frame(self, data, cur_frame_no, canvas) -> Frame:
         '''
@@ -91,11 +93,11 @@ class Flipbook:
         '''
         return Frame(data, cur_frame_no, self.flipbook_output, canvas)
 
-    def frame_generator(self, frame_source):
+    def frame_generator(self, frame_data):
         """
         Generator that yields extracted frames.
 
-        :param frame_source: An iterable (e.g., a generator) that yields video frames.
+        :param frame_source: list of video frame source data.
         :yield: Processed Frame objects.
         """
         canvas = Canvas(self.video_source.aspect, self.flipbook_output.canvas_res)
@@ -103,7 +105,7 @@ class Flipbook:
         cur_frame_no = 0
         next_capture_frame = 0
 
-        for index_in, data in enumerate(frame_source):
+        for index_in, data in enumerate(frame_data):
             if index_in >= next_capture_frame:
                 yield self.process_frame(data, cur_frame_no, canvas)
                 cur_frame_no += 1
@@ -121,7 +123,8 @@ class Flipbook:
             raise RuntimeError(f"Failed to open video file: {self.video_source.filename}")
 
         self.frames.clear()
-        self.frames.extend(self.frame_generator(self.video_frame_source(cam)))
+        for frame in self.frame_generator(self.video_frame_source(cam)):
+            self.frames.append(frame)
 
         self.video_source.total_frames = len(self.frames)
         cam.release()
