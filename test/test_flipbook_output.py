@@ -31,15 +31,24 @@ class TestFlipbookOutput(unittest.TestCase):
         self.assertEqual(self.flipbook_output.res, expected_res)
 
     def test_padding(self):
-        expected_padding = EqualPadding(max(0, self.border_padding - self.border_line_width)) + LeftPadding(self.left_padding)
+        border_padding = max(0, self.border_padding - self.border_line_width)
+        expected_padding = EqualPadding(border_padding) + LeftPadding(self.left_padding)
         self.assertEqual(self.flipbook_output.padding, expected_padding)
 
     def test_canvas_res(self):
-        horiz_padding = self.flipbook_output.padding.left + self.flipbook_output.padding.right + 2 * self.border_line_width
-        vert_padding = self.flipbook_output.padding.top + self.flipbook_output.padding.bottom + 2 * self.border_line_width
+        horiz_padding = self.flipbook_output.padding.left + \
+                        self.flipbook_output.padding.right + \
+                        2 * self.border_line_width
+        vert_padding = self.flipbook_output.padding.top + \
+                       self.flipbook_output.padding.bottom + \
+                       2 * self.border_line_width
         expected_width = self.flipbook_output.res.width - horiz_padding
         expected_height = self.flipbook_output.res.height - vert_padding
-        self.assertEqual(self.flipbook_output.canvas_res, Resolution(expected_width, expected_height))
+
+        self.assertEqual(
+            self.flipbook_output.canvas_res,
+            Resolution(expected_width, expected_height)
+        )
 
     def test_print_info(self):
         self.flipbook_output.print_info()  # Just checking it runs without errors
