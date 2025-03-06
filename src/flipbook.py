@@ -3,7 +3,6 @@ from typing import List
 import cv2
 
 from src.frame import Frame
-from src.paper_type import PaperType
 from src.video_source import VideoSource
 from src.flipbook_output import FlipbookOutput
 from src.flipbook_printer import FlipbookPrinter
@@ -26,6 +25,10 @@ class Flipbook:
         self.frames: List[Frame] = []
 
     @property
+    def input_file(self):
+        return self.video_source.filename
+
+    @property
     def base_name(self) -> str:
         # Base name for output files
         return self.video_source.get_base_name()
@@ -36,18 +39,17 @@ class Flipbook:
         output frame rate.
         The extracted frames are stored in self.frames.
         '''
-
         # Input and output frame rates
         fps_in = self.video_source.frame_rate
         fps_out = self.flipbook_output.frame_rate
 
         # Open the file and open stream
-        cam = cv2.VideoCapture(self.video_source.filename)
+        cam = cv2.VideoCapture(self.input_file)
         if not cam.isOpened():
-            raise RuntimeError(f"Failed to open video file: {self.video_source.filename}")
+            raise RuntimeError(f"Failed to open video file: {self.input_file}")
 
         frame_interval = fps_in / fps_out  # Interval between frames to extract
-        print(f"Extracting frames from {self.video_source.filename} at {fps_out} FPS")
+        print(f"Extracting frames from {self.input_file} at {fps_out} FPS")
 
         # Cycle through the frames
         self.frames.clear()

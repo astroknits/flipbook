@@ -8,7 +8,6 @@ from PIL import ImageFont
 from src.canvas import Canvas
 from src.flipbook_constants import FlipbookConstants
 from src.flipbook_output import FlipbookOutput
-from src.padding import HorizontalPadding, VerticalPadding
 from src.video_source import VideoSource
 
 
@@ -31,6 +30,8 @@ class Frame:
         self.frame_no = frame_no
         self.video_source = video_source
         self.flipbook_output = flipbook_output
+        self.canvas = Canvas(self.video_source.aspect, self.flipbook_output.canvas_res)
+        self.padding = self.flipbook_output.padding + self.canvas.padding
 
     @property
     def input_aspect(self):
@@ -52,21 +53,15 @@ class Frame:
         '''
         Generates and returns a frame with correct padding, aspect ratio adjustments, and watermark.
         '''
-        # TODO: extract canvas and pass it in as an arg to the
-        #       class instead of VideoSource
-        canvas = Canvas(self.input_aspect, self.flipbook_output.canvas_res)
-
-        padding = self.flipbook_output.padding + canvas.padding
-
         frame = Image.new('RGB', (self.output_width, self.output_height), 'white')
 
         # Convert OpenCV image (BGR) to PIL Image (RGB)
         img = cv2.cvtColor(self.data, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img.astype('uint8'), 'RGB')
-        img = img.resize(canvas.resize_res.tuple)
+        img = img.resize(self.canvas.resize_res.tuple)
 
         # Paste the image based on left, bottom padding
-        frame.paste(img, (padding.left, padding.bottom))
+        frame.paste(img, (self.padding.left, self.padding.bottom))
 
         # Add thin border
         frame = ImageOps.expand(frame, border=self.frame_border_line_width, fill='black')
@@ -75,8 +70,8 @@ class Frame:
 
         # Position at bottom left-hand corner of the image
         # Add left padding to match the bottom padding
-        x_pos = padding.bottom
-        y_pos = self.flipbook_output.height - padding.bottom
+        x_pos = self.padding.bottom
+        y_pos = self.flipbook_output.height - self.padding.bottom
 
         self.add_watermark_to_img(frame, (x_pos, y_pos))
         return frame

@@ -1,5 +1,4 @@
 from src.size import Size
-from src.resolution import Resolution
 
 class PaperFormat:
     '''
