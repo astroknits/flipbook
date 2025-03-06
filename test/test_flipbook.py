@@ -1,12 +1,12 @@
 import unittest
 from unittest.mock import MagicMock, patch
+
 from src.flipbook import Flipbook
 from src.frame import Frame
 from src.canvas import Canvas
 from src.resolution import Resolution
 from src.video_source import VideoSource
 from src.flipbook_output import FlipbookOutput
-import cv2
 
 
 class TestFlipbook(unittest.TestCase):
