@@ -15,8 +15,8 @@ class Frame:
     def __init__(self,
                  data: cv2.UMat,
                  frame_no: int,
-                 video_source: VideoSource,
-                 flipbook_output: FlipbookOutput
+                 flipbook_output: FlipbookOutput,
+                 canvas: Canvas,
                  ) -> None:
         '''
         Initializes a Frame object.
@@ -28,14 +28,13 @@ class Frame:
         '''
         self.data = data
         self.frame_no = frame_no
-        self.video_source = video_source
         self.flipbook_output = flipbook_output
-        self.canvas = Canvas(self.video_source.aspect, self.flipbook_output.canvas_res)
+        self.canvas = canvas
         self.padding = self.flipbook_output.padding + self.canvas.padding
 
     @property
     def input_aspect(self):
-        return self.video_source.aspect
+        return self.canvas.input_aspect
 
     @property
     def output_width(self):

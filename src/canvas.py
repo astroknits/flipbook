@@ -9,6 +9,7 @@ class Canvas:
                  input_aspect: float,
                  canvas_res: Resolution
                  ):
+        self.input_aspect = input_aspect
         self.res = canvas_res
         self.resizer = Resizer(input_aspect, canvas_res)
 

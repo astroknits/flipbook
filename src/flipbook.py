@@ -2,6 +2,7 @@ from typing import List
 
 import cv2
 
+from src.canvas import Canvas
 from src.frame import Frame
 from src.video_source import VideoSource
 from src.flipbook_output import FlipbookOutput
@@ -43,6 +44,10 @@ class Flipbook:
         fps_in = self.video_source.frame_rate
         fps_out = self.flipbook_output.frame_rate
 
+        # canvas object representing the frame area to which to resize
+        # the extracted source images
+        canvas = Canvas(self.video_source.aspect, self.flipbook_output.canvas_res)
+
         # Open the file and open stream
         cam = cv2.VideoCapture(self.input_file)
         if not cam.isOpened():
@@ -72,8 +77,8 @@ class Flipbook:
                 # otherwise we process the frame
                 frame = Frame(data,
                               cur_frame_no,
-                              self.video_source,
-                              self.flipbook_output)
+                              self.flipbook_output,
+                              canvas)
                 self.frames.append(frame)
                 cur_frame_no += 1
                 # The index of the next frame to capture based on output FPS
