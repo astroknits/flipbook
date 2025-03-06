@@ -1,5 +1,3 @@
-
-from src.flipbook_output import FlipbookOutput
 from src.padding import Padding
 from src.resizer import Resizer
 from src.resolution import Resolution
