@@ -72,10 +72,10 @@ class Frame:
         x_pos = self.padding.bottom
         y_pos = self.flipbook_output.height - self.padding.bottom
 
-        self.add_watermark_to_img(frame, (x_pos, y_pos))
+        self.__add_watermark_to_img(frame, (x_pos, y_pos))
         return frame
 
-    def add_watermark_to_img(self, img: Image.Image, loc: Tuple[int, int]) -> None:
+    def __add_watermark_to_img(self, img: Image.Image, loc: Tuple[int, int]) -> None:
         # Add the frame number as a watermark text on the bottom left corner
         watermark_text = str(self.frame_no)
         draw = ImageDraw.Draw(img)
