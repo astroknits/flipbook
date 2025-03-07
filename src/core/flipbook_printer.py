@@ -8,9 +8,9 @@ from PIL import Image
 from pypdf import PdfWriter
 from tqdm import tqdm
 
-from src.frame import Frame
-from src.flipbook_output import FlipbookOutput
-from src.paper_type import PaperType
+from src.core.frame import Frame
+from src.core.flipbook_output import FlipbookOutput
+from src.paper.paper_type import PaperType
 
 
 class FlipbookPrinter:

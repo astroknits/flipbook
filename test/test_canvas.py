@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import MagicMock
-from src.canvas import Canvas
-from src.resizer import Resizer
-from src.resolution import Resolution
-from src.padding import Padding
+from src.media.canvas import Canvas
+from src.media.resizer import Resizer
+from src.media.resolution import Resolution
+from src.media.padding import Padding
 
 
 class TestCanvas(unittest.TestCase):

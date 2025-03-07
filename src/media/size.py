@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Tuple
 
-from src.resolution import Resolution
+from src.media.resolution import Resolution
 
 
 @dataclass

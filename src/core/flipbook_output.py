@@ -1,6 +1,6 @@
-from src.padding import EqualPadding, LeftPadding, Padding
-from src.resolution import Resolution
-from src.size import Size
+from src.media.padding import EqualPadding, LeftPadding, Padding
+from src.media.resolution import Resolution
+from src.media.size import Size
 
 
 class FlipbookOutput:

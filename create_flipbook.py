@@ -1,8 +1,7 @@
-from src.size import Size
-from src.video_source import VideoSource
-from src.flipbook_output import FlipbookOutput
-from src.parse_args import parse_args
-from src.flipbook import Flipbook
+from src.core.video_source import VideoSource
+from src.core.flipbook_output import FlipbookOutput
+from src.config.parse_args import parse_args
+from src.core.flipbook import Flipbook
 
 def main():
     # Parse command line arguments

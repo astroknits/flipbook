@@ -1,8 +1,8 @@
 import unittest
-from src.padding import EqualPadding, LeftPadding, Padding
-from src.resolution import Resolution
-from src.size import Size
-from src.flipbook_output import FlipbookOutput
+from src.media.padding import EqualPadding, LeftPadding
+from src.media.resolution import Resolution
+from src.media.size import Size
+from src.core.flipbook_output import FlipbookOutput
 
 class TestFlipbookOutput(unittest.TestCase):
     def setUp(self):

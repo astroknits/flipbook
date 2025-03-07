@@ -1,12 +1,12 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.flipbook import Flipbook
-from src.frame import Frame
-from src.canvas import Canvas
-from src.resolution import Resolution
-from src.video_source import VideoSource
-from src.flipbook_output import FlipbookOutput
+from src.core.flipbook import Flipbook
+from src.core.frame import Frame
+from src.media.canvas import Canvas
+from src.media.resolution import Resolution
+from src.core.video_source import VideoSource
+from src.core.flipbook_output import FlipbookOutput
 
 
 class TestFlipbook(unittest.TestCase):

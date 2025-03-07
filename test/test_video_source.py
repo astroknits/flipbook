@@ -1,9 +1,8 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from pathlib import Path
 import cv2
-from src.video_source import VideoSource
-from src.flipbook_constants import FlipbookConstants
+from src.core.video_source import VideoSource
+from src.config.flipbook_constants import FlipbookConstants
 
 
 class TestVideoSource(unittest.TestCase):

@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import Mock
-from src.resolution import Resolution
-from src.padding import HorizontalPadding, VerticalPadding
-from src.resizer import Resizer
+from src.media.resolution import Resolution
+from src.media.padding import HorizontalPadding, VerticalPadding
+from src.media.resizer import Resizer
 
 
 class TestResizer(unittest.TestCase):
