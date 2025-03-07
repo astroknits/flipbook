@@ -20,12 +20,12 @@ class TestCanvas(unittest.TestCase):
         self.assertIsInstance(canvas.resizer, Resizer)
 
     def test_canvas_resize_res(self):
-        with unittest.mock.patch('src.canvas.Resizer', return_value=self.mock_resizer):
+        with unittest.mock.patch('src.media.canvas.Resizer', return_value=self.mock_resizer):
             canvas = Canvas(16 / 9, self.mock_resolution)
             self.assertEqual(canvas.resize_res, Resolution(640, 480))
 
     def test_canvas_padding(self):
-        with unittest.mock.patch('src.canvas.Resizer', return_value=self.mock_resizer):
+        with unittest.mock.patch('src.media.canvas.Resizer', return_value=self.mock_resizer):
             canvas = Canvas(16 / 9, self.mock_resolution)
             self.assertEqual(canvas.padding, Padding(10, 10, 5, 5))
 

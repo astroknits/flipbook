@@ -57,12 +57,12 @@ class Flipbook:
         """
         success = cam.grab()
         if not success:
-            print(f"Frame {index_in} could not be retrieved. Stopping extraction.")
+            print(f"Stopping extraction at frame {index_in}.\n")
             return None
 
         success, data = cam.retrieve()
         if not success:
-            print(f"Frame {index_in} could not be retrieved. Stopping extraction.")
+            print(f"Stopping extraction at frame {index_in}.\n")
             return None
 
         return data
@@ -111,12 +111,25 @@ class Flipbook:
                 cur_frame_no += 1
                 next_capture_frame += frame_interval
 
+    def print_info(self):
+        print('----------------------------')
+        print('Input Video Info')
+        print('----------------------------')
+        self.video_source.print_info()
+        print('\n----------------------------')
+        print('Output Flipbook Format')
+        print('----------------------------')
+        self.flipbook_output.print_info()
+        print()
+        print((f"Extracting frames from {self.video_source.filename} '"
+               f"'at {self.flipbook_output.frame_rate} FPS\n"))
+
+
     def extract_frames(self) -> None:
         """
         Extracts frames from the input video at the specified output frame rate.
         """
-        print((f"Extracting frames from {self.video_source.filename} '"
-               f"'at {self.flipbook_output.frame_rate} FPS"))
+        self.print_info()
 
         cam = self.video_capture or cv2.VideoCapture(self.video_source.filename)
         if not cam.isOpened():
