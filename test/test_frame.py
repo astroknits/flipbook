@@ -3,10 +3,10 @@ from unittest.mock import MagicMock, patch
 import cv2
 import numpy as np
 from PIL import Image
-from src.frame import Frame
-from src.flipbook_output import FlipbookOutput
-from src.canvas import Canvas
-from src.padding import Padding
+from src.core.frame import Frame
+from src.core.flipbook_output import FlipbookOutput
+from src.media.canvas import Canvas
+from src.media.padding import Padding
 
 
 class TestFrame(unittest.TestCase):

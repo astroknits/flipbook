@@ -1,10 +1,10 @@
 import unittest
-from src.padding import Padding
-from src.padding import EqualPadding
-from src.padding import LeftPadding
-from src.padding import VerticalPadding
-from src.padding import HorizontalPadding
-from src.padding import ZeroPadding
+from src.media.padding import Padding
+from src.media.padding import EqualPadding
+from src.media.padding import LeftPadding
+from src.media.padding import VerticalPadding
+from src.media.padding import HorizontalPadding
+from src.media.padding import ZeroPadding
 
 
 class TestPadding(unittest.TestCase):

@@ -2,11 +2,11 @@ from typing import List, Optional
 
 import cv2
 
-from src.canvas import Canvas
-from src.frame import Frame
-from src.video_source import VideoSource
-from src.flipbook_output import FlipbookOutput
-from src.flipbook_printer import FlipbookPrinter
+from src.media.canvas import Canvas
+from src.core.frame import Frame
+from src.core.video_source import VideoSource
+from src.core.flipbook_output import FlipbookOutput
+from src.core.flipbook_printer import FlipbookPrinter
 
 class Flipbook:
     def __init__(self,

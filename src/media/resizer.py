@@ -1,6 +1,6 @@
-from src.resolution import Resolution
-from src.padding import HorizontalPadding
-from src.padding import VerticalPadding
+from src.media.resolution import Resolution
+from src.media.padding import HorizontalPadding
+from src.media.padding import VerticalPadding
 
 class Resizer:
     def __init__(self,

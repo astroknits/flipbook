@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from src.paper_type import PaperType
+from src.paper.paper_type import PaperType
 
 def parse_args():
     '''

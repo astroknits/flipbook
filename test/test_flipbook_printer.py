@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
-from src.flipbook_printer import FlipbookPrinter
-from src.frame import Frame
-from src.flipbook_output import FlipbookOutput
-from src.paper_format import PaperFormat
-from src.paper_type import PaperType
+from src.core.flipbook_printer import FlipbookPrinter
+from src.core.frame import Frame
+from src.core.flipbook_output import FlipbookOutput
+from src.paper.paper_format import PaperFormat
+from src.paper.paper_type import PaperType
 
 
 class TestFlipbookPrinter(unittest.TestCase):

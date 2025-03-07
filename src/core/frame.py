@@ -5,10 +5,9 @@ from PIL import Image, ImageOps
 from PIL import ImageDraw
 from PIL import ImageFont
 
-from src.canvas import Canvas
-from src.flipbook_constants import FlipbookConstants
-from src.flipbook_output import FlipbookOutput
-from src.video_source import VideoSource
+from src.media.canvas import Canvas
+from src.config.flipbook_constants import FlipbookConstants
+from src.core.flipbook_output import FlipbookOutput
 
 
 class Frame:

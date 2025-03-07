@@ -1,4 +1,4 @@
-from src.size import Size
+from src.media.size import Size
 
 class PaperFormat:
     '''

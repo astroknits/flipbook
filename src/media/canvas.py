@@ -1,6 +1,6 @@
-from src.padding import Padding
-from src.resizer import Resizer
-from src.resolution import Resolution
+from src.media.padding import Padding
+from src.media.resizer import Resizer
+from src.media.resolution import Resolution
 
 class Canvas:
     def __init__(self,

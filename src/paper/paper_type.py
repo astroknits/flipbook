@@ -1,5 +1,5 @@
 from enum import Enum
-from src.paper_format import PaperFormat
+from src.paper.paper_format import PaperFormat
 
 class PaperType(Enum):
     '''
