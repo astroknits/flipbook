@@ -68,16 +68,18 @@ class TestFrame(unittest.TestCase):
         self.assertIsInstance(result, Image.Image)
 
     def side_effect_truetype(*args, **kwargs):
-        '''
-        Raise OSError only if not calling the default font
-        '''
-        font_arg = args[0]  # First argument to truetype
+        font_arg = args[0]
 
+        print(f"Mocked truetype called with type: {type(font_arg)}, value: {font_arg}")  # Debugging output
+
+        # Check if font_arg is a path string before calling .lower()
         if isinstance(font_arg, str):
             if "DejaVuSans" in font_arg or "default" in font_arg.lower():
-                return ImageFont.load_default()  # Allow loading default font
-        elif isinstance(font_arg, bytes) or hasattr(font_arg, "read"):  # Handle BytesIO
-            return ImageFont.load_default()  # Allow loading if it's a stream
+                return ImageFont.load_default()  # Allow fallback font
+
+        # Handle cases where truetype() is given a stream instead of a file path
+        elif isinstance(font_arg, (BytesIO, bytes)):
+            return ImageFont.load_default()
 
         raise OSError  # Simulate missing custom font
 
