@@ -1,4 +1,4 @@
-pillow==8.4.0
+pillow>=10.3.0
 opencv-python
 pypdf # to combine individual PDF pages into one document
 tqdm
