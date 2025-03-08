@@ -89,7 +89,7 @@ class TestFrame(unittest.TestCase):
 
         self.frame._Frame__add_watermark_to_img(mock_img, (50, 50))
 
-        mock_truetype.assert_called_once()
+        mock_truetype.assert_called_twice()
         mock_draw.assert_called_once()
         mock_draw_instance.text.assert_called_once()
 
