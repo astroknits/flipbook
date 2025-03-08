@@ -59,9 +59,14 @@ class FlipbookPrinter:
 
     def save(self) -> None:
         """Generates and saves the flipbook PDF."""
+        self.print_info()
         self.__create_output_dir()
         self.__write_pages()
         self.__combine_pdfs()
+
+    @property
+    def output_file(self):
+        return self.__get_output_name()
 
     def __create_output_dir(self) -> None:
         '''
@@ -130,7 +135,8 @@ class FlipbookPrinter:
         '''
         for page_no in tqdm(
                 range(self.num_pages_to_print),
-                total=self.num_pages_to_print):
+                total=self.num_pages_to_print,
+                desc='Saving printable flipbook'):
             # Get subset of frames for the batch
             start_frame = page_no * self.num_per_page
             end_frame = (page_no + 1) * self.num_per_page - 1
@@ -146,7 +152,7 @@ class FlipbookPrinter:
         and cleans up temporary files.
         '''
         output_frames = [self.__get_output_name(page_no) for page_no in range(self.num_pages_to_print)]
-        output_file_name = self.__get_output_name(None)
+        output_file_name = self.output_file
         merger = PdfWriter()
         for page in output_frames:
             merger.append(page)
@@ -156,3 +162,17 @@ class FlipbookPrinter:
         for page in output_frames:
             os.remove(page)
         print(f'\nWrote {output_file_name}\n\n')
+
+    def print_info(self):
+        print('----------------------------')
+        print('Printable Flipbook Specs')
+        print('----------------------------')
+        print(f'Printed page type: {self.paper_type.format.name}')
+        print(f'Printed page size (inches): {self.paper_type.format.size}')
+        print(f'Printed page size (pixels): {self.paper_type.format.res}')
+        print(f'Printed page dpi: {self.dpi}')
+        print(f'Frames per page: {self.nrows}x{self.ncols}')
+        print(f'Pages to print: {self.num_pages_to_print}')
+        print(f'Output file: {self.output_file}')
+        print('----------------------------')
+        print('\n')
