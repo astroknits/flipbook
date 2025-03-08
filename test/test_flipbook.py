@@ -126,7 +126,7 @@ class TestFlipbook(unittest.TestCase):
         frames = list(frame_gen)
         self.assertEqual(len(frames), 34)  # Expected number of frames
 
-    @patch("src.flipbook.FlipbookPrinter")
+    @patch("src.core.flipbook.FlipbookPrinter")
     def test_save(self, MockFlipbookPrinter):
         # Setup
         mock_video_source = self.get_mock_video_source()

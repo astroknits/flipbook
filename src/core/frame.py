@@ -51,7 +51,10 @@ class Frame:
         '''
         Generates and returns a frame with correct padding, aspect ratio adjustments, and watermark.
         '''
-        frame = Image.new('RGB', (self.output_width, self.output_height), 'white')
+
+        adjusted_width = self.output_width - 2 * self.frame_border_line_width
+        adjusted_height = self.output_height - 2 * self.frame_border_line_width
+        frame = Image.new('RGB', (adjusted_width, adjusted_height), 'white')
 
         # Convert OpenCV image (BGR) to PIL Image (RGB)
         img = cv2.cvtColor(self.data, cv2.COLOR_BGR2RGB)
@@ -65,7 +68,6 @@ class Frame:
         frame = ImageOps.expand(frame, border=self.frame_border_line_width, fill='black')
 
         # Add watermark to the frame
-
         # Position at bottom left-hand corner of the image
         # Add left padding to match the bottom padding
         x_pos = self.padding.bottom

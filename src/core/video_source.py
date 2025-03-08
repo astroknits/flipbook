@@ -69,7 +69,7 @@ class VideoSource:
         '''
         return Path(self.filename).stem
 
-    def print(self) -> None:
+    def print_info(self) -> None:
         print(f'Input file: {self.filename}')
         print(f'Resolution: {self.width}x{self.height}')
         print(f'Frame rate: {self.frame_rate:.2f} fps')

@@ -74,7 +74,7 @@ class TestVideoSource(unittest.TestCase):
         video_source = VideoSource("test.mp4")
 
         with patch("builtins.print") as mock_print:
-            video_source.print()
+            video_source.print_info()
             mock_print.assert_any_call("Input file: test.mp4")
             mock_print.assert_any_call("Resolution: 1280x720")
             mock_print.assert_any_call("Frame rate: 24.00 fps")
