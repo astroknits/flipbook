@@ -1,3 +1,4 @@
+import sys
 import unittest
 from io import BytesIO
 from unittest.mock import MagicMock, patch
@@ -89,10 +90,14 @@ class TestFrame(unittest.TestCase):
 
         self.frame._Frame__add_watermark_to_img(mock_img, (50, 50))
 
-        print(f"mock_truetype.call_count: {mock_truetype.call_count}")
+        with self.subTest(version="Python 3.10+"):
+            if sys.version_info >= (3, 10):
+                self.assertEqual(mock_truetype.call_count, 2)
 
-        # mock_truetype.assert_called_once()
-        assert mock_truetype.call_count == 2
+        with self.subTest(version="Python 3.9"):
+            if sys.version_info < (3, 10):
+                mock_truetype.assert_called_once()
+
         mock_draw.assert_called_once()
         mock_draw_instance.text.assert_called_once()
 
