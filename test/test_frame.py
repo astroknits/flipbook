@@ -73,6 +73,10 @@ class TestFrame(unittest.TestCase):
 
         print(f"Mocked truetype called with type: {type(font_arg)}, value: {font_arg}")  # Debugging output
 
+        # Prevent infinite recursion
+        if "load_default" in kwargs.get("_internal_call", ""):
+            return MagicMock(spec=ImageFont.FreeTypeFont)  # Return a fake font object
+
         # Check if font_arg is a path string before calling .lower()
         if isinstance(font_arg, str):
             if "DejaVuSans" in font_arg or "default" in font_arg.lower():
