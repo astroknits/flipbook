@@ -68,21 +68,28 @@ class FlipbookPrinter:
     def output_file(self):
         return self.__get_output_name()
 
+    @staticmethod
+    def validate_output_dir(pathname: Path) -> None:
+        '''
+        Ensures that the output directory exists and is empty.
+        '''
+        if pathname.exists():
+            if pathname.is_dir():
+                if any(pathname.iterdir()):
+                    raise FileExistsError(f'Output directory {pathname} exists and is nonempty.')
+            raise IsADirectoryError(f'Output directory {pathname} exists but is not a directory.')
+
     def __create_output_dir(self) -> None:
         '''
         Ensures that the output directory exists and is empty.
         '''
         output_dir_path = Path(self.output_dir)
-        if Path.exists(output_dir_path):
-            if output_dir_path.is_dir():
-                if os.listdir(self.output_dir):
-                    raise Exception((f'Output directory {self.output_dir} '
-                                     'already exists and is nonempty.'))
-                return
-            raise Exception((f'Expected data output directory path {self.output_dir}'
-                             ' exists but is not a directory.'))
-        # If the data_dir does not exist, crate it
-        output_dir_path.mkdir()
+
+        # Validate the output directory before creating it
+        FlipbookPrinter.validate_output_dir(output_dir_path)
+
+        # If the directory does not exist, create it (and all parent directories if necessary)
+        output_dir_path.mkdir(parents=True, exist_ok=True)
         return
 
     def __get_output_name(self, page_no: Optional[int] = None) -> Path:

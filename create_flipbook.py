@@ -1,11 +1,23 @@
+import sys
+from pathlib import Path
+
+from src.core.flipbook_printer import FlipbookPrinter
 from src.core.video_source import VideoSource
 from src.core.flipbook_output import FlipbookOutput
 from src.config.parse_args import parse_args
 from src.core.flipbook import Flipbook
 
+
 def main():
     # Parse command line arguments
     args = parse_args()
+
+    try:
+        FlipbookPrinter.validate_output_dir(Path(args.output_dir))
+    except (FileExistsError, IsADirectoryError) as e:
+        print(f'\n\nError:{e}\n\n')
+        print(f'Exiting because the directory {args.output_dir} is invalid.\n\n')
+        sys.exit(1)
 
     # instantiate Input object with input video path and metadata
     flipbook_input = VideoSource(args.filename)
