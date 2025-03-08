@@ -56,13 +56,15 @@ class VerticalPadding(Padding):
 
 class HorizontalPadding(Padding):
     '''
-    Add padding horizontally to flipbook.
-    For flipbook, keep the image as close as possible
-    to the right edge, so add the horizontal padding
-    to left side only
+    Add padding to be split between left and right
     '''
     def __init__(self, pad: int) -> None:
-        super().__init__(pad, 0, 0, 0)
+        left = pad//2
+        right = pad//2
+        if pad % 2 == 1:
+            # if it's an odd number, put the extra pixel on the lef
+            left += 1
+        super().__init__(left, right, 0, 0)
 
 
 class ZeroPadding(EqualPadding):

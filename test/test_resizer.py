@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 from src.media.resolution import Resolution
-from src.media.padding import HorizontalPadding, VerticalPadding
+from src.media.padding import VerticalPadding, LeftPadding
 from src.media.resizer import Resizer
 
 
@@ -13,7 +13,7 @@ class TestResizer(unittest.TestCase):
 
         expected_width = int(600 / (16 / 9))  # height / aspect ratio
         expected_height = 600  # matches canvas height
-        expected_padding = HorizontalPadding(canvas_res.width - expected_width)
+        expected_padding = LeftPadding(canvas_res.width - expected_width)
 
         self.assertEqual(resizer.resize_res, Resolution(expected_width, expected_height))
         self.assertEqual(resizer.padding, expected_padding)
