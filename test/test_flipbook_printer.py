@@ -43,7 +43,8 @@ class TestFlipbookPrinter(unittest.TestCase):
     @patch("os.listdir", return_value=[])
     @patch("pathlib.Path.exists", return_value=True)
     @patch("pathlib.Path.is_dir", return_value=True)
-    def test_create_output_dir_exists_empty(self, mock_listdir, mock_exists, mock_is_dir):
+    @patch("pathlib.Path.iterdir", return_value=[])  # Mocking the directory as empty
+    def test_create_output_dir_exists_empty(self, mock_iterdir, mock_is_dir, mock_exists, mock_listdir):
         """Tests that an existing empty directory does not raise an exception."""
         self.flipbook_printer._FlipbookPrinter__create_output_dir()
 
