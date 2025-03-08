@@ -71,14 +71,15 @@ class TestFrame(unittest.TestCase):
         '''
         Raise OSError only if not calling the default font
         '''
-        if isinstance(args[0], str):
-            if "DejaVuSans" in args[0] or 'default' in args[0].lower():
-                # Allow default font loading
-                return ImageFont.load_default()
-        elif isinstance(args[0], bytes) or hasattr(args[0], "read"):
-            # Handle BytesIO; allow loading if it's a stream
-            return ImageFont.load_default()
-        raise OSError
+        font_arg = args[0]  # First argument to truetype
+
+        if isinstance(font_arg, str):
+            if "DejaVuSans" in font_arg or "default" in font_arg.lower():
+                return ImageFont.load_default()  # Allow loading default font
+        elif isinstance(font_arg, bytes) or hasattr(font_arg, "read"):  # Handle BytesIO
+            return ImageFont.load_default()  # Allow loading if it's a stream
+
+        raise OSError  # Simulate missing custom font
 
     @patch("PIL.ImageDraw.Draw")
     @patch("PIL.ImageFont.truetype", side_effect=side_effect_truetype)
