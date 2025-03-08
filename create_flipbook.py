@@ -1,10 +1,10 @@
 import sys
 from pathlib import Path
 
-from src.core.flipbook_printer import FlipbookPrinter
 from src.core.video_source import VideoSource
 from src.core.flipbook_output import FlipbookOutput
-from src.config.parse_args import parse_args
+from src.helpers.flipbook_helper import FlipbookHelper
+from src.helpers.parse_args import parse_args
 from src.core.flipbook import Flipbook
 
 
@@ -13,7 +13,7 @@ def main():
     args = parse_args()
 
     try:
-        FlipbookPrinter.validate_output_dir(Path(args.output_dir))
+        FlipbookHelper.validate_output_dir(Path(args.output_dir))
     except (FileExistsError, IsADirectoryError) as e:
         print(f'\n\nError:{e}\n\n')
         print(f'Exiting because the directory {args.output_dir} is invalid.\n\n')

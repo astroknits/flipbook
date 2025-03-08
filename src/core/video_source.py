@@ -1,6 +1,6 @@
 from pathlib import Path
 import cv2
-from src.config.flipbook_constants import FlipbookConstants
+from src.helpers.flipbook_constants import FlipbookConstants
 
 
 class VideoSource:

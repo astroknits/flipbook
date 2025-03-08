@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from src.core.frame import Frame
 from src.core.flipbook_output import FlipbookOutput
+from src.helpers.flipbook_helper import FlipbookHelper
 from src.paper.paper_type import PaperType
 
 
@@ -68,17 +69,6 @@ class FlipbookPrinter:
     def output_file(self):
         return self.__get_output_name()
 
-    @staticmethod
-    def validate_output_dir(pathname: Path) -> None:
-        '''
-        Ensures that the output directory exists and is empty.
-        '''
-        if pathname.exists():
-            if pathname.is_dir():
-                if any(pathname.iterdir()):
-                    raise FileExistsError(f'Output directory {pathname} exists and is nonempty.')
-            raise IsADirectoryError(f'Output directory {pathname} exists but is not a directory.')
-
     def __create_output_dir(self) -> None:
         '''
         Ensures that the output directory exists and is empty.
@@ -86,7 +76,7 @@ class FlipbookPrinter:
         output_dir_path = Path(self.output_dir)
 
         # Validate the output directory before creating it
-        FlipbookPrinter.validate_output_dir(output_dir_path)
+        FlipbookHelper.validate_output_dir(output_dir_path)
 
         # If the directory does not exist, create it (and all parent directories if necessary)
         output_dir_path.mkdir(parents=True, exist_ok=True)

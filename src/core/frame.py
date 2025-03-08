@@ -6,7 +6,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 from src.media.canvas import Canvas
-from src.config.flipbook_constants import FlipbookConstants
+from src.helpers.flipbook_constants import FlipbookConstants
 from src.core.flipbook_output import FlipbookOutput
 
 
