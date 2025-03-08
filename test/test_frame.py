@@ -71,8 +71,12 @@ class TestFrame(unittest.TestCase):
         '''
         Raise OSError only if not calling the default font
         '''
-        if isinstance(args[0], str) and "DejaVuSans" in args[0] or 'default' in args[0].lower():
-            # Allow default font loading
+        if isinstance(args[0], str):
+            if "DejaVuSans" in args[0] or 'default' in args[0].lower():
+                # Allow default font loading
+                return ImageFont.load_default()
+        elif isinstance(args[0], bytes) or hasattr(args[0], "read"):
+            # Handle BytesIO; allow loading if it's a stream
             return ImageFont.load_default()
         raise OSError
 
