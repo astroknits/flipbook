@@ -33,7 +33,7 @@ class TestFlipbookPrinter(unittest.TestCase):
                                          )
         self.mock_flipbook_output.width = self.frame_width_in * self.dpi
         self.mock_flipbook_output.height = self.frame_height_in * self.dpi
-        self.mock_flipbook_output.res = Resolution(
+        self.mock_flipbook_output.size = Size(
                                         self.frame_width_in * self.dpi,
                                         self.frame_height_in * self.dpi
                                         )
@@ -42,10 +42,6 @@ class TestFlipbookPrinter(unittest.TestCase):
         self.mock_paper_format.size = Size(
                                       self.page_width_in,
                                       self.page_height_in
-                                      )
-        self.mock_paper_format.res = Resolution(
-                                      self.page_width_in * self.dpi,
-                                      int(self.page_height_in * self.dpi)
                                       )
         self.mock_paper_type = MagicMock(spec=PaperType)
         self.mock_paper_type.format = self.mock_paper_format

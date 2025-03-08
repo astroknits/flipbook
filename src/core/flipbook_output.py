@@ -20,9 +20,6 @@ class FlipbookOutput:
         # frame size in inches
         self.size = Size(width, height)
 
-        # frame resolution in pixels
-        self.res = self.size.get_resolution(dpi)
-
         # padding around the frame
         self.border_padding = border_padding
 
@@ -33,6 +30,11 @@ class FlipbookOutput:
         self.border_line_width = border_line_width
 
         self.dpi = dpi
+
+    @property
+    def res(self):
+        # frame resolution in pixels
+        return self.size.get_resolution(self.dpi)
 
     @property
     def width(self):

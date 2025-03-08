@@ -12,8 +12,11 @@ class PaperFormat:
                  dpi: int = 300):
         self.name = name
         self.size = Size(width, height)
-        self.res = self.size.get_resolution(dpi)
         self.dpi = dpi
+
+    @property
+    def res(self):
+        return self.size.get_resolution(self.dpi)
 
     @property
     def aspect(self) -> float:
