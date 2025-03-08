@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import cv2
 import numpy as np
 from PIL import Image
+from PIL import ImageFont
 from src.core.frame import Frame
 from src.core.flipbook_output import FlipbookOutput
 from src.media.canvas import Canvas
@@ -66,8 +67,17 @@ class TestFrame(unittest.TestCase):
         mock_expand.assert_called_once()
         self.assertIsInstance(result, Image.Image)
 
+    def side_effect_truetype(*args, **kwargs):
+        '''
+        Raise OSError only if not calling the default font
+        '''
+        if 'default' in args[0].lower():
+            # Allow default font loading
+            return ImageFont.load_default()
+        raise OSError
+
     @patch("PIL.ImageDraw.Draw")
-    @patch("PIL.ImageFont.truetype", side_effect=OSError)
+    @patch("PIL.ImageFont.truetype", side_effect=side_effect_truetype)
     def test_add_watermark_to_img_fallback_font(self, mock_truetype, mock_draw):
         mock_img = MagicMock(spec=Image.Image)
 
@@ -76,9 +86,9 @@ class TestFrame(unittest.TestCase):
 
         self.frame._Frame__add_watermark_to_img(mock_img, (50, 50))
 
-        # mock_truetype.assert_called_once()
-        # mock_draw.assert_called_once()
-        # mock_draw_instance.text.assert_called_once()
+        mock_truetype.assert_called_once()
+        mock_draw.assert_called_once()
+        mock_draw_instance.text.assert_called_once()
 
 
 if __name__ == "__main__":
