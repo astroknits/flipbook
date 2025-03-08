@@ -63,6 +63,7 @@ class FlipbookOutput:
 
     def print_info(self):
         print(f'Flipbook frame size: {self.res}')
-        print(f'frame_border_padding: {self.border_padding}')
-        print(f'frame_left_padding: {self.left_padding}')
+        print(f'border_padding: {self.border_padding}')
+        print(f'left_padding: {self.left_padding}')
+        print(f'border_line_width: {self.border_line_width}')
 

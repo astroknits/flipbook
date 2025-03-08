@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 import cv2
+from tqdm import tqdm
 
 from src.media.canvas import Canvas
 from src.core.frame import Frame
@@ -57,12 +58,10 @@ class Flipbook:
         """
         success = cam.grab()
         if not success:
-            print(f"Stopping extraction at frame {index_in}.\n")
             return None
 
         success, data = cam.retrieve()
         if not success:
-            print(f"Stopping extraction at frame {index_in}.\n")
             return None
 
         return data
@@ -75,11 +74,14 @@ class Flipbook:
         :return: list of raw frame data.
         """
         frame_data = []
-        for index_in in range(self.video_source.total_frames):
+        for frame_no, index_in in enumerate(tqdm(range(self.video_source.total_frames))):
             data = self.capture_frame(cam, index_in)
             if data is None:
                 break
             frame_data.append(data)
+        if frame_no < self.video_source.total_frames:
+            print(f"   ...Stopping extraction at frame {frame_no}.")
+        print(f'   ...Done extracting frames.\n\n')
         return frame_data
 
     def process_frame(self, data, cur_frame_no, canvas) -> Frame:
@@ -120,9 +122,9 @@ class Flipbook:
         print('Output Flipbook Format')
         print('----------------------------')
         self.flipbook_output.print_info()
-        print()
-        print((f"Extracting frames from {self.video_source.filename} '"
-               f"'at {self.flipbook_output.frame_rate} FPS\n"))
+        print('\n')
+        print((f'Extracting frames from {self.video_source.filename} '
+               f'at {self.flipbook_output.frame_rate} FPS'))
 
 
     def extract_frames(self) -> None:
@@ -135,11 +137,12 @@ class Flipbook:
         if not cam.isOpened():
             raise RuntimeError(f"Failed to open video file: {self.video_source.filename}")
 
+        # expected number of frames after resampling
+        output_frames = round(self.video_source.total_frames * self.output_frame_rate / self.input_frame_rate)
         self.frames.clear()
         for frame in self.frame_generator(self.video_frame_source(cam)):
             self.frames.append(frame)
 
-        self.video_source.total_frames = len(self.frames)
         cam.release()
         cv2.destroyAllWindows()
 
@@ -157,7 +160,7 @@ class Flipbook:
         if not self.frames:
             raise ValueError("No frames extracted. Run extract_frames() before saving.")
 
-        print(f"Saving flipbook to {output_dir} with paper type {paper_type} at {dpi} DPI.")
+        print(f"Saving printable flipbook to {output_dir} with paper type {paper_type} at {dpi} DPI.")
 
         printer = FlipbookPrinter(
             self.frames,
