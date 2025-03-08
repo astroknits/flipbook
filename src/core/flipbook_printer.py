@@ -1,8 +1,7 @@
 import os
 
 from math import ceil
-from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import List, Tuple
 
 from PIL import Image
 from pypdf import PdfWriter
@@ -61,37 +60,13 @@ class FlipbookPrinter:
     def save(self) -> None:
         """Generates and saves the flipbook PDF."""
         self.print_info()
-        self.__create_output_dir()
+        FlipbookHelper.create_output_dir(self.output_dir)
         self.__write_pages()
         self.__combine_pdfs()
 
     @property
     def output_file(self):
-        return self.__get_output_name()
-
-    def __create_output_dir(self) -> None:
-        '''
-        Ensures that the output directory exists and is empty.
-        '''
-        output_dir_path = Path(self.output_dir)
-
-        # Validate the output directory before creating it
-        FlipbookHelper.validate_output_dir(output_dir_path)
-
-        # If the directory does not exist, create it (and all parent directories if necessary)
-        output_dir_path.mkdir(parents=True, exist_ok=True)
-        return
-
-    def __get_output_name(self, page_no: Optional[int] = None) -> Path:
-        '''
-        Returns the filename for a given page number,
-        or the final PDF if no page number is given.
-        '''
-        if page_no is None:
-            filename = f'{self.base_name}.pdf'
-        else:
-            filename = f'{self.base_name}.{str(page_no)}.pdf'
-        return Path(self.output_dir).joinpath(Path(filename))
+        return FlipbookHelper.get_output_name(self.base_name, self.output_dir)
 
     def __get_offset(self, frame_no: int) -> Tuple[int, int]:
         '''Computes the offset position for a frame on the page.'''
@@ -107,7 +82,7 @@ class FlipbookPrinter:
 
     def __write_page(self, frames: List[Frame], frame_no: int) -> None:
         '''Generates and saves an individual page with the given frames.'''
-        page_filename = self.__get_output_name(frame_no)
+        page_filename = FlipbookHelper.get_output_name(self.base_name, self.output_dir, frame_no)
         page = Image.new('RGB',
                          (self.paper_type.format.width, self.paper_type.format.height),
                          'white')
@@ -148,7 +123,8 @@ class FlipbookPrinter:
         Combines all individual pages into a single PDF
         and cleans up temporary files.
         '''
-        output_frames = [self.__get_output_name(page_no) for page_no in range(self.num_pages_to_print)]
+        output_frames = [FlipbookHelper.get_output_name(self.base_name, self.output_dir, page_no)\
+                         for page_no in range(self.num_pages_to_print)]
         output_file_name = self.output_file
         merger = PdfWriter()
         for page in output_frames:
