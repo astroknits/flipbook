@@ -89,7 +89,10 @@ class TestFrame(unittest.TestCase):
 
         self.frame._Frame__add_watermark_to_img(mock_img, (50, 50))
 
-        mock_truetype.assert_called_twice()
+        print(f"mock_truetype.call_count: {mock_truetype.call_count}")
+
+        # mock_truetype.assert_called_once()
+        assert mock_truetype.call_count == 2
         mock_draw.assert_called_once()
         mock_draw_instance.text.assert_called_once()
 
