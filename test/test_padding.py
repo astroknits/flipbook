@@ -38,8 +38,8 @@ class TestPadding(unittest.TestCase):
 
     def test_horizontal_padding(self):
         padding = HorizontalPadding(7)
-        self.assertEqual(padding.left, 7)
-        self.assertEqual(padding.right, 0)
+        self.assertEqual(padding.left, 4)
+        self.assertEqual(padding.right, 3)
         self.assertEqual(padding.top, 0)
         self.assertEqual(padding.bottom, 0)
 

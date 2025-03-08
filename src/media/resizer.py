@@ -1,5 +1,5 @@
 from src.media.resolution import Resolution
-from src.media.padding import HorizontalPadding
+from src.media.padding import LeftPadding
 from src.media.padding import VerticalPadding
 
 class Resizer:
@@ -23,7 +23,10 @@ class Resizer:
         if self.fit_to_height:
             resize_height = self.canvas_res.height
             resize_width = int(resize_height / self.input_aspect)
-            padding = HorizontalPadding(self.canvas_res.width - resize_width)
+            # When fitting to height, we want the image to be as far
+            # to the right of the book as possible (for left-bound book)
+            # so use LeftPadding instead of HorizontalPadding
+            padding = LeftPadding(self.canvas_res.width - resize_width)
         else:
             resize_width = self.canvas_res.width
             resize_height = int(resize_width * self.input_aspect)
