@@ -90,14 +90,8 @@ class TestFrame(unittest.TestCase):
 
         self.frame._Frame__add_watermark_to_img(mock_img, (50, 50))
 
-        with self.subTest(version="Python 3.10+"):
-            if sys.version_info >= (3, 10):
-                self.assertEqual(mock_truetype.call_count, 2)
-
-        with self.subTest(version="Python 3.9"):
-            if sys.version_info < (3, 10):
-                mock_truetype.assert_called_once()
-
+        # True for Pillow==8.4.0; for 11.1.0 truetype is called twice
+        mock_truetype.assert_called_once()
         mock_draw.assert_called_once()
         mock_draw_instance.text.assert_called_once()
 
