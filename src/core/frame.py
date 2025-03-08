@@ -78,7 +78,7 @@ class Frame:
 
     def __add_watermark_to_img(self, img: Image.Image, loc: Tuple[int, int]) -> None:
         # Add the frame number as a watermark text on the bottom left corner
-        watermark_text = str(self.frame_no)
+        watermark_text = str(self.frame_no + 1)
         draw = ImageDraw.Draw(img)
 
         # Load font, with fallback
