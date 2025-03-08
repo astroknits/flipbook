@@ -71,22 +71,13 @@ class TestFrame(unittest.TestCase):
     def side_effect_truetype(*args, **kwargs):
         font_arg = args[0]
 
-        print(f"Mocked truetype called with type: {type(font_arg)}, value: {font_arg}")  # Debugging output
+        if isinstance(font_arg, str) and ("DejaVuSans" in font_arg or "default" in font_arg.lower()):
+            return MagicMock(spec=ImageFont.FreeTypeFont)  # Prevent recursion
 
-        # Prevent infinite recursion
-        if "load_default" in kwargs.get("_internal_call", ""):
-            return MagicMock(spec=ImageFont.FreeTypeFont)  # Return a fake font object
+        if isinstance(font_arg, (BytesIO, bytes)):
+            return MagicMock(spec=ImageFont.FreeTypeFont)  # Prevent recursion
 
-        # Check if font_arg is a path string before calling .lower()
-        if isinstance(font_arg, str):
-            if "DejaVuSans" in font_arg or "default" in font_arg.lower():
-                return ImageFont.load_default()  # Allow fallback font
-
-        # Handle cases where truetype() is given a stream instead of a file path
-        elif isinstance(font_arg, (BytesIO, bytes)):
-            return ImageFont.load_default()
-
-        raise OSError  # Simulate missing custom font
+        raise OSError
 
     @patch("PIL.ImageDraw.Draw")
     @patch("PIL.ImageFont.truetype", side_effect=side_effect_truetype)
