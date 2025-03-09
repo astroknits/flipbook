@@ -1,4 +1,6 @@
 from src.media.size import Size
+from src.paper.orientation import Orientation
+
 
 class PaperFormat:
     '''
@@ -9,10 +11,18 @@ class PaperFormat:
                  name: str,
                  width: float,
                  height: float,
-                 dpi: int = 300):
+                 dpi: int = 300,
+                 orientation: Orientation = Orientation.PORTRAIT):
         self.name = name
-        self.size = Size(width, height)
         self.dpi = dpi
+        self.orientation = orientation
+
+        # Adjust size based on orientation
+        if self.orientation == Orientation.PORTRAIT:
+            self.size = Size(width, height)
+        else:
+            # Swap width & height for landscape
+            self.size = Size(height, width)
 
     @property
     def res(self):
