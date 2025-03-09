@@ -1,6 +1,7 @@
 import os
 
 from math import ceil
+from pathlib import Path
 from typing import List, Tuple
 
 from PIL import Image
@@ -11,6 +12,10 @@ from src.core.frame import Frame
 from src.core.flipbook_output import FlipbookOutput
 from src.helpers.flipbook_helper import FlipbookHelper
 from src.media.padding import Padding, HorizontalPadding, VerticalPadding
+from src.media.resolution import Resolution
+from src.media.size import Size
+from src.paper.orientation import Orientation
+from src.paper.paper_format import PaperFormat
 from src.paper.paper_type import PaperType
 
 
@@ -48,6 +53,8 @@ class FlipbookPrinter:
         self.output_dir = output_dir
         self.base_name = base_name
 
+        self.paper_orientation = self.__get_orientation()
+
     def save(self) -> None:
         """Generates and saves the flipbook PDF."""
         self.print_info()
@@ -56,42 +63,68 @@ class FlipbookPrinter:
         self.__combine_pdfs()
 
     @property
-    def nrows(self):
+    def nrows(self) -> int:
+        # number of rows of frames on a given page
         return int(self.height // self.flipbook_output.height)
 
     @property
-    def ncols(self):
+    def ncols(self) -> int:
+        # number of columns of frames on a given page
         return int(self.width // self.flipbook_output.width)
 
     @property
-    def num_per_page(self):
+    def num_per_page(self) -> int:
         # Compute the number of rows and columns that fit on a page
         return self.nrows * self.ncols
 
     @property
-    def num_pages_to_print(self):
+    def num_pages_to_print(self) -> int:
         # Calculate the total number of pages required
         return ceil(len(self.frames) / self.num_per_page)
 
     @property
-    def width(self):
-        return self.paper_type.format.width
+    def size(self) -> Size:
+        # page width in pixels
+        return self.paper_type.format(self.paper_orientation).size
 
     @property
-    def height(self):
-        return self.paper_type.format.height
+    def res(self) -> Resolution:
+        # page width in pixels
+        return self.paper_type.format(self.paper_orientation).res
 
     @property
-    def output_file(self):
+    def width(self) -> int:
+        # page width in pixels
+        return self.paper_type.format(self.paper_orientation).width
+
+    @property
+    def height(self) -> int:
+        # page height in pixels
+        return self.paper_type.format(self.paper_orientation).height
+
+    @property
+    def output_file(self) -> Path:
+        '''
+        Name of the output PDF file that contains the combined pages of
+        tiled frames
+        '''
         return FlipbookHelper.get_output_name(self.base_name, self.output_dir)
 
     @property
     def page_padding(self) -> Padding:
+        '''
+        Calculate how much white space is left over on the page once
+        the nrows x ncols frames have been accounted for, and return
+        a Padding object that would place the frames centred on the page.
+        '''
         horiz_padding = self.width - self.ncols * self.flipbook_output.width
         vert_padding = self.height - self.nrows * self.flipbook_output.height
         return HorizontalPadding(horiz_padding) + VerticalPadding(vert_padding)
 
-    def __create_output_dir(self):
+    def __create_output_dir(self) -> None:
+        '''
+        Create directory self.output_dir after performing validating
+        '''
         return FlipbookHelper.create_output_dir(self.output_dir)
 
     def __get_offset(self, frame_no: int) -> Tuple[int, int]:
@@ -105,6 +138,28 @@ class FlipbookPrinter:
         offset_height = self.page_padding.top + self.flipbook_output.height * row
 
         return offset_width, offset_height
+
+    def __get_orientation(self) -> Orientation:
+        '''
+        check which orientation leads to the fewest number of
+        output pages, and return that orientation.
+        '''
+        portrait_paper = self.paper_type.format(Orientation.PORTRAIT)
+        landscape_paper = self.paper_type.format(Orientation.LANDSCAPE)
+        if self.__get_num_per_page(portrait_paper) >= self.__get_num_per_page(landscape_paper):
+            return Orientation.PORTRAIT
+        return Orientation.LANDSCAPE
+
+    def __get_num_per_page(self, paper_format: PaperFormat) -> int:
+        '''
+        Return the number of frames per page for a given paper format
+
+        Note we can't just use the nrows/ncols property here
+        because we use this method to determine the paper orientation
+        '''
+        nrows = int(paper_format.height // self.flipbook_output.height)
+        ncols = int(paper_format.width // self.flipbook_output.width)
+        return nrows * ncols
 
     def __write_page(self, frames: List[Frame], frame_no: int) -> None:
         '''Generates and saves an individual page with the given frames.'''
@@ -164,9 +219,10 @@ class FlipbookPrinter:
         print('----------------------------')
         print('Printable Flipbook Specs')
         print('----------------------------')
-        print(f'Printed page type: {self.paper_type.format.name}')
-        print(f'Printed page size (inches): {self.paper_type.format.size}')
-        print(f'Printed page size (pixels): {self.paper_type.format.res}')
+        print(f'Printed page type: {self.paper_type.format(self.paper_orientation).name}')
+        print(f'Printed page orientation: {self.paper_orientation.name}')
+        print(f'Printed page size (inches): {self.size}')
+        print(f'Printed page size (pixels): {self.res}')
         print(f'Printed page dpi: {self.dpi}')
         print(f'Frames per page: {self.nrows}x{self.ncols}')
         print(f'Pages to print: {self.num_pages_to_print}')

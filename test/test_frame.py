@@ -10,6 +10,8 @@ from src.core.frame import Frame
 from src.core.flipbook_output import FlipbookOutput
 from src.media.canvas import Canvas
 from src.media.padding import Padding
+from src.media.resolution import Resolution
+from src.media.size import Size
 
 
 class TestFrame(unittest.TestCase):
@@ -22,6 +24,9 @@ class TestFrame(unittest.TestCase):
         self.mock_canvas = MagicMock(spec=Canvas)
 
         # Define mock attributes
+        self.mock_flipbook_output.dpi = 200
+        self.mock_flipbook_output.size = Size(4, 3)
+        self.mock_flipbook_output.res = Resolution(800, 600)
         self.mock_flipbook_output.width = 800
         self.mock_flipbook_output.height = 600
         self.mock_flipbook_output.padding = Padding(left=150, right=20, bottom=20, top=20)
@@ -88,7 +93,7 @@ class TestFrame(unittest.TestCase):
         mock_draw_instance = MagicMock()
         mock_draw.return_value = mock_draw_instance
 
-        self.frame._Frame__add_watermark_to_img(mock_img, (50, 50))
+        self.frame._Frame__add_watermark_to_img(mock_img)
 
         assert mock_truetype.call_count == 2
         mock_draw.assert_called_once()

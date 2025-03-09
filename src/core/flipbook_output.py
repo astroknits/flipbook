@@ -32,24 +32,34 @@ class FlipbookOutput:
         self.dpi = dpi
 
     @property
-    def res(self):
+    def aspect(self):
+        return self.size.aspect
+
+    @property
+    def res(self) -> Resolution:
         # frame resolution in pixels
         return self.size.get_resolution(self.dpi)
 
     @property
-    def width(self):
+    def width(self) -> int:
+        # frame width in pixels
         return self.res.width
 
     @property
-    def height(self):
+    def height(self) -> int:
+        # frame height in pixels
         return self.res.height
 
     @property
     def padding(self) -> Padding:
+        '''
+        user-input padding (border padding + left-hand padding for binding)
+        values in pixels
+        '''
         # Adjust padding to avoid double application of border padding
         adjusted_padding = max(0, self.border_padding - self.border_line_width)
 
-        # Compute frame padding
+        # Compute additive frame padding
         return EqualPadding(adjusted_padding) + LeftPadding(self.left_padding)
 
     @property
@@ -63,7 +73,7 @@ class FlipbookOutput:
         height = self.res.height - vert_padding
         return Resolution(width, height)
 
-    def print_info(self):
+    def print_info(self) -> None:
         print(f'Flipbook frame size: {self.res}')
         print(f'border_padding: {self.border_padding}')
         print(f'left_padding: {self.left_padding}')
