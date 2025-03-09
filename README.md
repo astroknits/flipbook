@@ -89,6 +89,6 @@ Wrote flipbook_output/mickey/steamboat_willie_mickey.pdf
 This results in a PDF with 9 pages of tiled frames, each having a watermark with the frame number.
 
 Each page looks something like:
-![](images/steamboat_willie_mickey_5.png)
+![](images/steamboat_willie_mickey_1.png)
 
 The output PDF containing all tiled frames can then be printed, cut, assembled and bound into a flipbook.
