@@ -9,7 +9,7 @@ class Resizer:
                  ):
         self.input_aspect = input_aspect
         self.canvas_res = canvas_res
-        self.resize_res, self.padding = self._compute_resize()
+        self.resize_res, self.padding = self.__compute_resize()
 
     @property
     def aspect(self) -> float:
@@ -22,7 +22,7 @@ class Resizer:
         # (True -> means fit to height; False -> means fit to width)
         return self.input_aspect > self.aspect
 
-    def _compute_resize(self) -> tuple[Resolution, Padding]:
+    def __compute_resize(self) -> tuple[Resolution, Padding]:
         '''
         return the parameters for resizing the input video frames
         to the size of the output frame canvas

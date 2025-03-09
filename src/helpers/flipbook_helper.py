@@ -1,5 +1,9 @@
 from pathlib import Path
 from typing import Optional
+import math
+
+from src.helpers.flipbook_constants import FlipbookConstants
+from src.media.resolution import Resolution
 
 
 class FlipbookHelper:
@@ -40,3 +44,19 @@ class FlipbookHelper:
         else:
             filename = f'{base_name}.{str(page_no)}.pdf'
         return Path(output_dir).joinpath(Path(filename))
+
+    @staticmethod
+    def get_fontsize(output_res: Resolution) -> int:
+        '''
+        Return the font size for frame # watermark, appropriately scaled
+        Scale using sqrt of height or width ratio to prevent drastic scaling
+        '''
+        reference_res = FlipbookConstants.Font.REF_RES
+        if reference_res.aspect >= output_res.aspect:
+            # compare heights
+            scale_factor = math.sqrt(output_res.height / reference_res.height)
+        else:
+            # compare widths
+            scale_factor = math.sqrt(output_res.width / reference_res.width)
+        return int(FlipbookConstants.Font.SIZE * scale_factor)
+

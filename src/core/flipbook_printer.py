@@ -202,6 +202,7 @@ class FlipbookPrinter:
         print('Printable Flipbook Specs')
         print('----------------------------')
         print(f'Printed page type: {self.paper_type.format(self.paper_orientation).name}')
+        print(f'Printed page type: {self.paper_orientation.name}')
         print(f'Printed page size (inches): {self.paper_type.format(self.paper_orientation).size}')
         print(f'Printed page size (pixels): {self.paper_type.format(self.paper_orientation).res}')
         print(f'Printed page dpi: {self.dpi}')

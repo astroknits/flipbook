@@ -32,6 +32,10 @@ class FlipbookOutput:
         self.dpi = dpi
 
     @property
+    def aspect(self):
+        return self.size.aspect
+
+    @property
     def res(self) -> Resolution:
         # frame resolution in pixels
         return self.size.get_resolution(self.dpi)
