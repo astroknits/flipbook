@@ -12,6 +12,8 @@ from src.core.frame import Frame
 from src.core.flipbook_output import FlipbookOutput
 from src.helpers.flipbook_helper import FlipbookHelper
 from src.media.padding import Padding, HorizontalPadding, VerticalPadding
+from src.media.resolution import Resolution
+from src.media.size import Size
 from src.paper.orientation import Orientation
 from src.paper.paper_format import PaperFormat
 from src.paper.paper_type import PaperType
@@ -95,6 +97,16 @@ class FlipbookPrinter:
     def num_pages_to_print(self) -> int:
         # Calculate the total number of pages required
         return ceil(len(self.frames) / self.num_per_page)
+
+    @property
+    def size(self) -> Size:
+        # page width in pixels
+        return self.paper_type.format(self.paper_orientation).size
+
+    @property
+    def res(self) -> Resolution:
+        # page width in pixels
+        return self.paper_type.format(self.paper_orientation).res
 
     @property
     def width(self) -> int:
@@ -202,9 +214,9 @@ class FlipbookPrinter:
         print('Printable Flipbook Specs')
         print('----------------------------')
         print(f'Printed page type: {self.paper_type.format(self.paper_orientation).name}')
-        print(f'Printed page type: {self.paper_orientation.name}')
-        print(f'Printed page size (inches): {self.paper_type.format(self.paper_orientation).size}')
-        print(f'Printed page size (pixels): {self.paper_type.format(self.paper_orientation).res}')
+        print(f'Printed page orientation: {self.paper_orientation.name}')
+        print(f'Printed page size (inches): {self.size}')
+        print(f'Printed page size (pixels): {self.res}')
         print(f'Printed page dpi: {self.dpi}')
         print(f'Frames per page: {self.nrows}x{self.ncols}')
         print(f'Pages to print: {self.num_pages_to_print}')
