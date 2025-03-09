@@ -12,6 +12,8 @@ from src.core.frame import Frame
 from src.core.flipbook_output import FlipbookOutput
 from src.helpers.flipbook_helper import FlipbookHelper
 from src.media.padding import Padding, HorizontalPadding, VerticalPadding
+from src.paper.orientation import Orientation
+from src.paper.paper_format import PaperFormat
 from src.paper.paper_type import PaperType
 
 
@@ -49,6 +51,24 @@ class FlipbookPrinter:
         self.output_dir = output_dir
         self.base_name = base_name
 
+        self.paper_orientation = self.__get_orientation()
+
+    def __get_orientation(self) -> Orientation:
+        '''
+        check which orientation leads to the fewest number of
+        output pages, and return that orientation.
+        '''
+        portrait_paper = self.paper_type.format(Orientation.PORTRAIT)
+        landscape_paper = self.paper_type.format(Orientation.LANDSCAPE)
+        if self.get_num_per_page(portrait_paper) >= self.get_num_per_page(landscape_paper):
+            return Orientation.PORTRAIT
+        return Orientation.LANDSCAPE
+
+    def get_num_per_page(self, paper_format: PaperFormat):
+        nrows = int(paper_format.height // self.flipbook_output.height)
+        ncols = int(paper_format.width // self.flipbook_output.width)
+        return nrows * ncols
+
     def save(self) -> None:
         """Generates and saves the flipbook PDF."""
         self.print_info()
@@ -79,12 +99,12 @@ class FlipbookPrinter:
     @property
     def width(self) -> int:
         # page width in pixels
-        return self.paper_type.format.width
+        return self.paper_type.format(self.paper_orientation).width
 
     @property
     def height(self) -> int:
         # page height in pixels
-        return self.paper_type.format.height
+        return self.paper_type.format(self.paper_orientation).height
 
     @property
     def output_file(self) -> Path:
@@ -181,9 +201,9 @@ class FlipbookPrinter:
         print('----------------------------')
         print('Printable Flipbook Specs')
         print('----------------------------')
-        print(f'Printed page type: {self.paper_type.format.name}')
-        print(f'Printed page size (inches): {self.paper_type.format.size}')
-        print(f'Printed page size (pixels): {self.paper_type.format.res}')
+        print(f'Printed page type: {self.paper_type.format(self.paper_orientation).name}')
+        print(f'Printed page size (inches): {self.paper_type.format(self.paper_orientation).size}')
+        print(f'Printed page size (pixels): {self.paper_type.format(self.paper_orientation).res}')
         print(f'Printed page dpi: {self.dpi}')
         print(f'Frames per page: {self.nrows}x{self.ncols}')
         print(f'Pages to print: {self.num_pages_to_print}')

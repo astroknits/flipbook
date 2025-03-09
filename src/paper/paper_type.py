@@ -11,7 +11,6 @@ class PaperType(Enum):
     LETTER = ("US Letter", 8.5, 11.0)
     LEGAL = ("US Legal", 8.5, 14.0)
 
-    @property
     def format(self, orientation: Orientation = Orientation.PORTRAIT) -> PaperFormat:
         '''Return a PaperFormat instance for the given paper type.'''
         return PaperFormat(*self.value, orientation=orientation)
