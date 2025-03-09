@@ -61,6 +61,7 @@ class VideoSource:
 
     @property
     def aspect(self) -> float:
+        # aspect ratio of the source video file
         return float(self.height)/float(self.width)
 
     def get_base_name(self) -> str:

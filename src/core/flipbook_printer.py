@@ -1,6 +1,7 @@
 import os
 
 from math import ceil
+from pathlib import Path
 from typing import List, Tuple
 
 from PIL import Image
@@ -56,42 +57,58 @@ class FlipbookPrinter:
         self.__combine_pdfs()
 
     @property
-    def nrows(self):
+    def nrows(self) -> int:
+        # number of rows of frames on a given page
         return int(self.height // self.flipbook_output.height)
 
     @property
-    def ncols(self):
+    def ncols(self) -> int:
+        # number of columns of frames on a given page
         return int(self.width // self.flipbook_output.width)
 
     @property
-    def num_per_page(self):
+    def num_per_page(self) -> int:
         # Compute the number of rows and columns that fit on a page
         return self.nrows * self.ncols
 
     @property
-    def num_pages_to_print(self):
+    def num_pages_to_print(self) -> int:
         # Calculate the total number of pages required
         return ceil(len(self.frames) / self.num_per_page)
 
     @property
-    def width(self):
+    def width(self) -> int:
+        # page width in pixels
         return self.paper_type.format.width
 
     @property
-    def height(self):
+    def height(self) -> int:
+        # page height in pixels
         return self.paper_type.format.height
 
     @property
-    def output_file(self):
+    def output_file(self) -> Path:
+        '''
+        Name of the output PDF file that contains the combined pages of
+        tiled frames
+        '''
         return FlipbookHelper.get_output_name(self.base_name, self.output_dir)
 
     @property
     def page_padding(self) -> Padding:
+        '''
+        Calculate how much white space is left over on the page once
+        the nrows x ncols frames have been accounted for, and return
+        a Padding object that would place the frames centred on the page.
+        '''
         horiz_padding = self.width - self.ncols * self.flipbook_output.width
         vert_padding = self.height - self.nrows * self.flipbook_output.height
         return HorizontalPadding(horiz_padding) + VerticalPadding(vert_padding)
 
-    def __create_output_dir(self):
+    def __create_output_dir(self) -> None:
+        '''
+        Create directory self.output_dir after performing validating
+        '''
         return FlipbookHelper.create_output_dir(self.output_dir)
 
     def __get_offset(self, frame_no: int) -> Tuple[int, int]:

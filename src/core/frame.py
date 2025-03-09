@@ -32,19 +32,24 @@ class Frame:
         self.padding = self.flipbook_output.padding + self.canvas.padding
 
     @property
-    def input_aspect(self):
+    def input_aspect(self) -> float:
+        # aspect ratio of the canvas
         return self.canvas.input_aspect
 
     @property
-    def output_width(self):
+    def output_width(self) -> int:
+        # width of the flipbook frames in pixels
         return self.flipbook_output.width
 
     @property
-    def output_height(self):
+    def output_height(self) -> int:
+        # height of the flipbook frames in pixels
         return self.flipbook_output.height
 
     @property
-    def frame_border_line_width(self):
+    def frame_border_line_width(self) -> int:
+        # width in pixels of the line drawn around
+        # the border of each frame
         return self.flipbook_output.border_line_width
 
     def get_frame(self) -> Image.Image:
@@ -77,7 +82,10 @@ class Frame:
         return frame
 
     def __add_watermark_to_img(self, img: Image.Image, loc: Tuple[int, int]) -> None:
-        # Add the frame number as a watermark text on the bottom left corner
+        '''
+        Add the frame number as a watermark text on the bottom left corner
+        '''
+
         watermark_text = str(self.frame_no + 1)
         draw = ImageDraw.Draw(img)
 

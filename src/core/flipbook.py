@@ -31,6 +31,7 @@ class Flipbook:
 
     @property
     def input_file(self):
+        # input file name of video source
         return self.video_source.filename
 
     @property

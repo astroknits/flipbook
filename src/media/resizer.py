@@ -1,5 +1,5 @@
 from src.media.resolution import Resolution
-from src.media.padding import LeftPadding
+from src.media.padding import LeftPadding, Padding
 from src.media.padding import VerticalPadding
 
 class Resizer:
@@ -13,13 +13,20 @@ class Resizer:
 
     @property
     def aspect(self) -> float:
+        # aspect ratio of the canvas area
         return self.canvas_res.aspect
 
     @property
     def fit_to_height(self) -> bool:
+        # fit the input image to the canvas height?
+        # (True -> means fit to height; False -> means fit to width)
         return self.input_aspect > self.aspect
 
-    def _compute_resize(self):
+    def _compute_resize(self) -> tuple[Resolution, Padding]:
+        '''
+        return the parameters for resizing the input video frames
+        to the size of the output frame canvas
+        '''
         if self.fit_to_height:
             resize_height = self.canvas_res.height
             resize_width = int(resize_height / self.input_aspect)
