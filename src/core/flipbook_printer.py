@@ -55,22 +55,6 @@ class FlipbookPrinter:
 
         self.paper_orientation = self.__get_orientation()
 
-    def __get_orientation(self) -> Orientation:
-        '''
-        check which orientation leads to the fewest number of
-        output pages, and return that orientation.
-        '''
-        portrait_paper = self.paper_type.format(Orientation.PORTRAIT)
-        landscape_paper = self.paper_type.format(Orientation.LANDSCAPE)
-        if self.get_num_per_page(portrait_paper) >= self.get_num_per_page(landscape_paper):
-            return Orientation.PORTRAIT
-        return Orientation.LANDSCAPE
-
-    def get_num_per_page(self, paper_format: PaperFormat):
-        nrows = int(paper_format.height // self.flipbook_output.height)
-        ncols = int(paper_format.width // self.flipbook_output.width)
-        return nrows * ncols
-
     def save(self) -> None:
         """Generates and saves the flipbook PDF."""
         self.print_info()
@@ -154,6 +138,28 @@ class FlipbookPrinter:
         offset_height = self.page_padding.top + self.flipbook_output.height * row
 
         return offset_width, offset_height
+
+    def __get_orientation(self) -> Orientation:
+        '''
+        check which orientation leads to the fewest number of
+        output pages, and return that orientation.
+        '''
+        portrait_paper = self.paper_type.format(Orientation.PORTRAIT)
+        landscape_paper = self.paper_type.format(Orientation.LANDSCAPE)
+        if self.__get_num_per_page(portrait_paper) >= self.__get_num_per_page(landscape_paper):
+            return Orientation.PORTRAIT
+        return Orientation.LANDSCAPE
+
+    def __get_num_per_page(self, paper_format: PaperFormat) -> int:
+        '''
+        Return the number of frames per page for a given paper format
+
+        Note we can't just use the nrows/ncols property here
+        because we use this method to determine the paper orientation
+        '''
+        nrows = int(paper_format.height // self.flipbook_output.height)
+        ncols = int(paper_format.width // self.flipbook_output.width)
+        return nrows * ncols
 
     def __write_page(self, frames: List[Frame], frame_no: int) -> None:
         '''Generates and saves an individual page with the given frames.'''
