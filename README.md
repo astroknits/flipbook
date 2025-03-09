@@ -36,7 +36,7 @@ Flipbook frame formatting settings:
 Examples:
 
 ```
-python create_flipbook.py input_videos/steamboat_willie_mickey.mov flipbook_output/mickey --output-frame-rate 5 --width 4 --height 2.5 --border-padding 20 --left-padding 130 --border-line-width 3
+python create_flipbook.py input_videos/steamboat_willie_mickey.mov flipbook_output/mickey --output-frame-rate 5 --width 4 --height 2.5 --border-padding 30 --left-padding 180 --border-line-width 3
 ```
 Output is the following:
 
@@ -52,13 +52,13 @@ Frame rate: 59.34 fps
 Output Flipbook Format
 ----------------------------
 Flipbook frame size: 1200x750
-border_padding: 20
-left_padding: 130
+border_padding: 30
+left_padding: 180
 border_line_width: 3
 
 
 Extracting frames from input_videos/steamboat_willie_mickey.mov at 5.0 FPS
- 98%|█████████████████████████████████████████████████████████████████████████▊ | 441/448 [00:02<00:00, 157.95it/s]
+ 98%|█████████████████████████████████████████████████████████████████████████▊ | 441/448 [00:02<00:00, 172.71it/s]
    ...Stopping extraction at frame 441.
    ...Done extracting frames.
 
@@ -68,16 +68,17 @@ Saving printable flipbook to flipbook_output/mickey with paper type letter at 30
 Printable Flipbook Specs
 ----------------------------
 Printed page type: US Letter
-Printed page size (inches): 11.0x8.5
-Printed page size (pixels): 3300x2550
+Printed page orientation: PORTRAIT
+Printed page size (inches): 8.5x11.0
+Printed page size (pixels): 2550x3300
 Printed page dpi: 300
-Frames per page: 3x2
-Pages to print: 7
+Frames per page: 4x2
+Pages to print: 5
 Output file: flipbook_output/mickey/steamboat_willie_mickey.pdf
 ----------------------------
 
 
-Saving printable flipbook: 100%|█████████████████████████████████████████████████████| 7/7 [00:02<00:00,  2.35it/s]
+Saving printable flipbook: 100%|█████████████████████████████████████████████████████| 5/5 [00:02<00:00,  1.88it/s]
 
 
 Wrote flipbook_output/mickey/steamboat_willie_mickey.pdf
@@ -88,6 +89,6 @@ Wrote flipbook_output/mickey/steamboat_willie_mickey.pdf
 This results in a PDF with 9 pages of tiled frames, each having a watermark with the frame number.
 
 Each page looks something like:
-![](images/steamboat_willie_mickey_5.png)
+![](images/steamboat_willie_mickey_1.png)
 
 The output PDF containing all tiled frames can then be printed, cut, assembled and bound into a flipbook.
